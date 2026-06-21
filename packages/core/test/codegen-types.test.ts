@@ -23,4 +23,23 @@ describe('renderTypesFile', () => {
     expect(out).toContain('type HeroProps = ComponentProps & {');
     expect(out).toContain("import { ComponentProps } from '@/lib/component-props';");
   });
+
+  it('imports only the type names actually used (Field and ImageField, not LinkField)', () => {
+    const out = renderTypesFile(contract, '@/lib/component-props');
+    expect(out).toContain("import { Field, ImageField } from '@sitecore-content-sdk/nextjs';");
+    expect(out).not.toContain('LinkField');
+  });
+
+  it('omits sitecore import entirely when no known types are used', () => {
+    const rawContract: ComponentContract = {
+      name: 'Box',
+      fields: [
+        { name: 'items', tsType: 'ItemReference[]', optional: false, renderer: 'raw', sitecoreImport: null },
+      ],
+      params: [],
+      placeholders: [],
+    };
+    const out = renderTypesFile(rawContract, '@/lib/component-props');
+    expect(out).not.toContain("from '@sitecore-content-sdk/nextjs'");
+  });
 });

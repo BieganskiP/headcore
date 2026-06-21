@@ -11,6 +11,10 @@ const IMPORT_ALIAS: Record<string, string> = {
   Link: 'Link as SitecoreLink',
 };
 
+function camelToKebab(name: string): string {
+  return name.replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`);
+}
+
 function rendererJsx(f: FieldContract, first: boolean): string {
   const guard = (jsx: string) => (f.optional ? `      {fields.${f.name} && ${jsx}}` : `      ${jsx}`);
   switch (f.renderer) {
@@ -33,11 +37,11 @@ export function renderComponentFile(c: ComponentContract, opts: ComponentOptions
   const importNames = [...renderers].map((r) => IMPORT_ALIAS[r] ?? r);
   if (opts.useDatasourceCheck) importNames.push('withDatasourceCheck');
 
-  const imports = `import {
-${importNames.map((n) => `  ${n},`).join('\n')}
-} from '${opts.sitecorePackage}';
+  const sdkImportLine = importNames.length > 0
+    ? `import {\n${importNames.map((n) => `  ${n},`).join('\n')}\n} from '${opts.sitecorePackage}';\n\n`
+    : '';
 
-import { ${c.name}Props } from './${c.name}.types';`;
+  const imports = `${sdkImportLine}import { ${c.name}Props } from './${c.name}.types';`;
 
   let firstText = true;
   const body = c.fields
@@ -48,9 +52,13 @@ import { ${c.name}Props } from './${c.name}.types';`;
     })
     .join('\n');
 
+  const sectionAttrs = c.params.length > 0
+    ? ' ' + c.params.map((p) => `data-${camelToKebab(p)}={params?.${p}}`).join(' ')
+    : '';
+
   const component = `const ${c.name} = ({ fields, params }: ${c.name}Props) => {
   return (
-    <section data-variant={params?.variant}>
+    <section${sectionAttrs}>
 ${body}
     </section>
   );

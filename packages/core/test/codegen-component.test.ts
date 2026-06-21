@@ -40,4 +40,58 @@ describe('renderComponentFile', () => {
     expect(out).toContain('export default Hero;');
     expect(out).not.toContain('withDatasourceCheck');
   });
+
+  it('generates data-variant attribute from params', () => {
+    const out = renderComponentFile(contract, {
+      propsImport: '@/lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+    });
+    expect(out).toContain('data-variant={params?.variant}');
+  });
+
+  it('generates kebab-case data attribute for camelCase param', () => {
+    const camelContract: ComponentContract = {
+      ...contract,
+      params: ['backgroundColor'],
+    };
+    const out = renderComponentFile(camelContract, {
+      propsImport: '@/lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+    });
+    expect(out).toContain('data-background-color={params?.backgroundColor}');
+  });
+
+  it('emits plain <section> with no data attributes when params is empty', () => {
+    const noParamsContract: ComponentContract = {
+      ...contract,
+      params: [],
+    };
+    const out = renderComponentFile(noParamsContract, {
+      propsImport: '@/lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+    });
+    expect(out).toContain('<section>');
+    expect(out).not.toContain('data-');
+  });
+
+  it('omits sitecore content sdk import when no renderers and no datasource check', () => {
+    const rawOnlyContract: ComponentContract = {
+      name: 'SimpleBox',
+      fields: [
+        { name: 'title', tsType: 'Field<string>', optional: true, renderer: 'raw', sitecoreImport: null },
+      ],
+      params: [],
+      placeholders: [],
+    };
+    const out = renderComponentFile(rawOnlyContract, {
+      propsImport: '@/lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+    });
+    expect(out).not.toContain("from '@sitecore-content-sdk/nextjs'");
+    expect(out).toContain("import { SimpleBoxProps } from './SimpleBox.types';");
+  });
 });

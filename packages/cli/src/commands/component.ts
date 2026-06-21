@@ -54,6 +54,12 @@ export async function runComponent(input: ComponentInput, deps?: Partial<Inspect
     const names = [...new Set(all.map((n) => n.componentName))].join(', ');
     throw new Error(`rendering "${input.name}" not found on ${input.route}. Available: ${names}`);
   }
+  if (matches.length > 1) {
+    throw new Error(
+      `rendering "${input.name}" is ambiguous on ${input.route}: ${matches.length} instances found. ` +
+      `(MVP 1 scaffolds one component; multiple instances are not yet disambiguated.)`,
+    );
+  }
   const node = matches[0];
 
   const contract = buildContract(node, config.fieldTypeOverrides);

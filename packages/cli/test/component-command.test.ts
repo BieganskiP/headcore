@@ -60,4 +60,28 @@ describe('runComponent', () => {
     await runComponent(input, deps);
     await expect(runComponent(input, deps)).rejects.toThrow(/--force/);
   });
+
+  it('errors with ambiguous when multiple renderings share the same componentName', async () => {
+    const ambiguousRendered = {
+      sitecore: {
+        context: { pageState: 'normal', language: 'en' },
+        route: {
+          name: 'test',
+          placeholders: {
+            'headless-main': [
+              { uid: 'a1', componentName: 'Hero', dataSource: '/data/hero1', params: {}, fields: { heading: { value: 'First' } }, placeholders: {} },
+              { uid: 'a2', componentName: 'Hero', dataSource: '/data/hero2', params: {}, fields: { heading: { value: 'Second' } }, placeholders: {} },
+            ],
+          },
+        },
+      },
+    };
+    const config = makeConfig('/tmp/never');
+    await expect(
+      runComponent(
+        { name: 'Hero', route: '/test', lang: undefined, dryRun: false, force: false },
+        { loadConfig: vi.fn().mockResolvedValue(config), getLayout: vi.fn().mockResolvedValue(ambiguousRendered) },
+      ),
+    ).rejects.toThrow(/ambiguous/i);
+  });
 });

@@ -22,6 +22,9 @@ export function inferField(
     return { name, tsType: 'Field<string>', optional: true, renderer: 'raw', sitecoreImport: null };
   }
   if (typeof value === 'string') {
+    if (/<[a-z][\s\S]*>/i.test(value)) {
+      return { name, tsType: 'Field<string>', optional: false, renderer: 'RichText', sitecoreImport: 'RichText' };
+    }
     return { name, tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' };
   }
   if (typeof value === 'boolean') {

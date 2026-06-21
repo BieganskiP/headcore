@@ -36,4 +36,14 @@ describe('inferField', () => {
     const r = inferField('promo', { value: 'x' }, { promo: 'LinkField' });
     expect(r.tsType).toBe('LinkField');
   });
+
+  it('infers rich text field when value looks like HTML', () => {
+    const r = inferField('description', { value: '<p>Rich</p>' }, {});
+    expect(r).toMatchObject({ tsType: 'Field<string>', optional: false, renderer: 'RichText', sitecoreImport: 'RichText' });
+  });
+
+  it('plain string (no HTML) still infers as Text', () => {
+    const r = inferField('heading', { value: 'Hello World' }, {});
+    expect(r).toMatchObject({ tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' });
+  });
 });
