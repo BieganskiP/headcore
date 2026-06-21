@@ -17,7 +17,7 @@ const contract: ComponentContract = {
 describe('renderComponentFile', () => {
   it('imports only used renderers and wraps in withDatasourceCheck when enabled', () => {
     const out = renderComponentFile(contract, {
-      propsImport: '@/lib/component-props',
+      propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: true,
     });
@@ -33,7 +33,7 @@ describe('renderComponentFile', () => {
 
   it('exports plainly when datasource check disabled', () => {
     const out = renderComponentFile(contract, {
-      propsImport: '@/lib/component-props',
+      propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
     });
@@ -43,7 +43,7 @@ describe('renderComponentFile', () => {
 
   it('generates data-variant attribute from params', () => {
     const out = renderComponentFile(contract, {
-      propsImport: '@/lib/component-props',
+      propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
     });
@@ -56,7 +56,7 @@ describe('renderComponentFile', () => {
       params: ['backgroundColor'],
     };
     const out = renderComponentFile(camelContract, {
-      propsImport: '@/lib/component-props',
+      propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
     });
@@ -69,7 +69,7 @@ describe('renderComponentFile', () => {
       params: ['DynamicPlaceholderId'],
     };
     const out = renderComponentFile(sxaContract, {
-      propsImport: '@/lib/component-props',
+      propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
     });
@@ -83,7 +83,7 @@ describe('renderComponentFile', () => {
       params: [],
     };
     const out = renderComponentFile(noParamsContract, {
-      propsImport: '@/lib/component-props',
+      propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
     });
@@ -112,7 +112,7 @@ describe('renderComponentFile', () => {
       placeholders: [],
     };
     const out = renderComponentFile(cardsContract, {
-      propsImport: '@/lib/component-props',
+      propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
     });
@@ -126,6 +126,39 @@ describe('renderComponentFile', () => {
     expect(out).toContain('Image as SitecoreImage');
   });
 
+  it('renders nested card maps with distinct loop variables and imports nested item types', () => {
+    const nested: ComponentContract = {
+      name: 'ColumnSlider',
+      fields: [
+        {
+          name: 'Tabs', tsType: 'TabsItem[]', optional: false, renderer: 'Cards', sitecoreImport: null,
+          itemTypeName: 'TabsItem',
+          itemFields: [
+            { name: 'Tab Title', tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' },
+            {
+              name: 'Column Slider Items', tsType: 'ColumnSliderItemsItem[]', optional: false, renderer: 'Cards',
+              sitecoreImport: null, itemTypeName: 'ColumnSliderItemsItem',
+              itemFields: [
+                { name: 'Slide Title', tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' },
+              ],
+            },
+          ],
+        },
+      ],
+      params: [],
+      placeholders: [],
+    };
+    const out = renderComponentFile(nested, {
+      propsImport: 'lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+    });
+    expect(out).toContain("import { ColumnSliderProps, TabsItem, ColumnSliderItemsItem } from './ColumnSlider.types';");
+    expect(out).toContain('{fields.Tabs?.map((item: TabsItem) => (');
+    expect(out).toContain("{item.fields['Column Slider Items']?.map((itemItem: ColumnSliderItemsItem) => (");
+    expect(out).toContain("<Text tag=\"span\" field={itemItem.fields['Slide Title']} />");
+  });
+
   it('uses bracket access for field and param names with spaces', () => {
     const spacedContract: ComponentContract = {
       name: 'Promo',
@@ -136,7 +169,7 @@ describe('renderComponentFile', () => {
       placeholders: [],
     };
     const out = renderComponentFile(spacedContract, {
-      propsImport: '@/lib/component-props',
+      propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
     });
@@ -155,7 +188,7 @@ describe('renderComponentFile', () => {
       placeholders: [],
     };
     const out = renderComponentFile(noParams, {
-      propsImport: '@/lib/component-props',
+      propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
     });
@@ -173,7 +206,7 @@ describe('renderComponentFile', () => {
       placeholders: [],
     };
     const out = renderComponentFile(rawOnlyContract, {
-      propsImport: '@/lib/component-props',
+      propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
     });

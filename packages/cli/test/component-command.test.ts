@@ -12,7 +12,7 @@ const rendered = JSON.parse(
 function makeConfig(componentPath: string) {
   return {
     edge: { endpoint: 'https://e', apiKey: 'k', site: 's', defaultLanguage: 'en' },
-    componentPath, componentPropsImport: '@/lib/component-props',
+    componentPath, componentPropsImport: 'lib/component-props',
     sitecorePackage: '@sitecore-content-sdk/nextjs', useDatasourceCheck: true, generateMocks: true, fieldTypeOverrides: {},
   };
 }

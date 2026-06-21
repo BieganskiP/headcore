@@ -277,7 +277,7 @@ import {
   withDatasourceCheck,
 } from '@sitecore-content-sdk/nextjs';
 
-import { ComponentProps } from '@/lib/component-props';
+import { ComponentProps } from 'lib/component-props';
 
 type HeroFields = {
   heading: Field<string>;
@@ -427,7 +427,7 @@ Example config file:
 // sitecore-scaffold.config.ts
 export default {
   componentPath: 'src/components',
-  componentPropsImport: '@/lib/component-props',
+  componentPropsImport: 'lib/component-props',
   styling: 'tailwind',
   framework: 'nextjs-app-router',
   sitecorePackage: '@sitecore-content-sdk/nextjs',

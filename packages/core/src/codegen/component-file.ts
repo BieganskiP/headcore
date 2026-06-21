@@ -1,5 +1,6 @@
 import type { ComponentContract, FieldContract } from '../types.js';
 import { accessExpr, optionalAccess, toKebabAttr } from '../identifiers.js';
+import { collectCardFields, flattenFields } from './fields.js';
 
 interface ComponentOptions {
   propsImport: string;
@@ -28,19 +29,26 @@ function fieldElement(f: FieldContract, accessor: string, firstText: boolean): s
   }
 }
 
-/** Renders a `.map()` of basic cards for a 'Cards' field, rendering each inner field. */
-function renderCards(f: FieldContract, indent: string): string {
+/**
+ * Renders a `.map()` of basic cards for a 'Cards' field, rendering each inner field.
+ * Recurses for nested card fields, using a distinct loop variable per depth.
+ */
+function renderCards(f: FieldContract, indent: string, collectionAccessor: string, itemVar: string): string {
+  const childVar = `${itemVar}Item`;
   const inner = (f.itemFields ?? [])
     .map((inf) => {
-      const accessor = accessExpr('item.fields', inf.name);
+      const accessor = accessExpr(`${itemVar}.fields`, inf.name);
+      if (inf.renderer === 'Cards') {
+        return renderCards(inf, `${indent}    `, accessor, childVar);
+      }
       const el = fieldElement(inf, accessor, false);
       if (!el) return `${indent}      {/* TODO: render "${inf.name}" (${inf.tsType}) */}`;
       return inf.optional ? `${indent}      {${accessor} && ${el}}` : `${indent}      ${el}`;
     })
     .join('\n');
 
-  return `${indent}{${accessExpr('fields', f.name)}?.map((item: ${f.itemTypeName}) => (
-${indent}  <article className="card" key={item.id}>
+  return `${indent}{${collectionAccessor}?.map((${itemVar}: ${f.itemTypeName}) => (
+${indent}  <article className="card" key={${itemVar}.id}>
 ${inner}
 ${indent}  </article>
 ${indent}))}`;
@@ -48,9 +56,8 @@ ${indent}))}`;
 
 export function renderComponentFile(c: ComponentContract, opts: ComponentOptions): string {
   const renderers = new Set<string>();
-  for (const f of c.fields) {
+  for (const f of flattenFields(c.fields)) {
     if (f.sitecoreImport) renderers.add(f.sitecoreImport);
-    for (const inf of f.itemFields ?? []) if (inf.sitecoreImport) renderers.add(inf.sitecoreImport);
   }
   const importNames = [...renderers].map((r) => IMPORT_ALIAS[r] ?? r);
   if (opts.useDatasourceCheck) importNames.push('withDatasourceCheck');
@@ -59,16 +66,14 @@ export function renderComponentFile(c: ComponentContract, opts: ComponentOptions
     ? `import {\n${importNames.map((n) => `  ${n},`).join('\n')}\n} from '${opts.sitecorePackage}';\n\n`
     : '';
 
-  const itemTypeNames = c.fields
-    .filter((f) => f.renderer === 'Cards')
-    .map((f) => f.itemTypeName as string);
+  const itemTypeNames = collectCardFields(c.fields).map((f) => f.itemTypeName as string);
   const typeImports = [`${c.name}Props`, ...itemTypeNames];
   const imports = `${sdkImportLine}import { ${typeImports.join(', ')} } from './${c.name}.types';`;
 
   let firstText = true;
   const body = c.fields
     .map((f) => {
-      if (f.renderer === 'Cards') return renderCards(f, '      ');
+      if (f.renderer === 'Cards') return renderCards(f, '      ', accessExpr('fields', f.name), 'item');
       const accessor = accessExpr('fields', f.name);
       const isFirst = f.renderer === 'Text' && firstText;
       if (isFirst) firstText = false;

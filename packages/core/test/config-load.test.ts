@@ -22,7 +22,7 @@ describe('loadConfig', () => {
     const p = writeConfig(dir, `export default {
       edge: { endpoint: process.env.SITECORE_EDGE_URL, apiKey: process.env.SITECORE_EDGE_TOKEN, site: 'my-site', defaultLanguage: 'en' },
       componentPath: 'src/components',
-      componentPropsImport: '@/lib/component-props',
+      componentPropsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: true,
       generateMocks: true,
@@ -37,7 +37,7 @@ describe('loadConfig', () => {
   it('throws a clear error when edge.endpoint is missing', async () => {
     const p = writeConfig(dir, `export default {
       edge: { apiKey: 'x', site: 's', defaultLanguage: 'en' },
-      componentPath: 'src/components', componentPropsImport: '@/lib/component-props',
+      componentPath: 'src/components', componentPropsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs', useDatasourceCheck: true, generateMocks: true, fieldTypeOverrides: {},
     };`);
     await expect(loadConfig(p)).rejects.toThrow(/edge\.endpoint/);

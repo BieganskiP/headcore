@@ -14,18 +14,18 @@ const contract: ComponentContract = {
 
 describe('renderTypesFile', () => {
   it('emits Fields, Params and Props types', () => {
-    const out = renderTypesFile(contract, '@/lib/component-props');
+    const out = renderTypesFile(contract, 'lib/component-props');
     expect(out).toContain('type HeroFields = {');
     expect(out).toContain('heading: Field<string>;');
     expect(out).toContain('image?: ImageField;');
     expect(out).toContain('type HeroParams = {');
     expect(out).toContain('variant?: string;');
     expect(out).toContain('type HeroProps = ComponentProps & {');
-    expect(out).toContain("import { ComponentProps } from '@/lib/component-props';");
+    expect(out).toContain("import { ComponentProps } from 'lib/component-props';");
   });
 
   it('imports only the type names actually used (Field and ImageField, not LinkField)', () => {
-    const out = renderTypesFile(contract, '@/lib/component-props');
+    const out = renderTypesFile(contract, 'lib/component-props');
     expect(out).toContain("import { Field, ImageField } from '@sitecore-content-sdk/nextjs';");
     expect(out).not.toContain('LinkField');
   });
@@ -39,7 +39,7 @@ describe('renderTypesFile', () => {
       params: [],
       placeholders: [],
     };
-    const out = renderTypesFile(rawContract, '@/lib/component-props');
+    const out = renderTypesFile(rawContract, 'lib/component-props');
     expect(out).not.toContain("from '@sitecore-content-sdk/nextjs'");
   });
 
@@ -52,7 +52,7 @@ describe('renderTypesFile', () => {
       params: [],
       placeholders: [],
     };
-    const out = renderTypesFile(refContract, '@/lib/component-props');
+    const out = renderTypesFile(refContract, 'lib/component-props');
     expect(out).toContain('type ItemReference = {');
     expect(out).toContain('Tabs: ItemReference[];');
     // The SDK does not export ItemReference, so it must not be imported.
@@ -79,7 +79,7 @@ describe('renderTypesFile', () => {
       params: [],
       placeholders: [],
     };
-    const out = renderTypesFile(cardsContract, '@/lib/component-props');
+    const out = renderTypesFile(cardsContract, 'lib/component-props');
     expect(out).toContain('type TabsItem = {');
     expect(out).toContain('  fields: {');
     expect(out).toContain('    Name: Field<string>;');
@@ -91,6 +91,34 @@ describe('renderTypesFile', () => {
     expect(out).toContain('export type { TabsFields, TabsParams, TabsProps, TabsItem };');
   });
 
+  it('defines and exports item types for nested Cards fields', () => {
+    const nested: ComponentContract = {
+      name: 'ColumnSlider',
+      fields: [
+        {
+          name: 'Tabs', tsType: 'TabsItem[]', optional: false, renderer: 'Cards', sitecoreImport: null,
+          itemTypeName: 'TabsItem',
+          itemFields: [
+            {
+              name: 'Column Slider Items', tsType: 'ColumnSliderItemsItem[]', optional: false, renderer: 'Cards',
+              sitecoreImport: null, itemTypeName: 'ColumnSliderItemsItem',
+              itemFields: [
+                { name: 'Slide Title', tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' },
+              ],
+            },
+          ],
+        },
+      ],
+      params: [],
+      placeholders: [],
+    };
+    const out = renderTypesFile(nested, 'lib/component-props');
+    expect(out).toContain('type TabsItem = {');
+    expect(out).toContain('type ColumnSliderItemsItem = {');
+    expect(out).toContain("'Column Slider Items': ColumnSliderItemsItem[];");
+    expect(out).toContain('export type { ColumnSliderFields, ColumnSliderParams, ColumnSliderProps, TabsItem, ColumnSliderItemsItem };');
+  });
+
   it('quotes field and param keys that are not valid identifiers', () => {
     const spacedContract: ComponentContract = {
       name: 'Promo',
@@ -100,7 +128,7 @@ describe('renderTypesFile', () => {
       params: ['Some Param'],
       placeholders: [],
     };
-    const out = renderTypesFile(spacedContract, '@/lib/component-props');
+    const out = renderTypesFile(spacedContract, 'lib/component-props');
     expect(out).toContain("'Button Link'?: LinkField;");
     expect(out).toContain("'Some Param'?: string;");
   });

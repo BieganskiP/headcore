@@ -31,7 +31,7 @@ describe('generateFiles', () => {
   it('produces three files at componentPath when mocks enabled', () => {
     const files = generateFiles(contract, node, {
       componentPath: 'src/components',
-      componentPropsImport: '@/lib/component-props',
+      componentPropsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: true,
       generateMocks: true,
@@ -48,7 +48,7 @@ describe('generateFiles', () => {
   it('omits mock file when mocks disabled', () => {
     const files = generateFiles(contract, node, {
       componentPath: 'src/components',
-      componentPropsImport: '@/lib/component-props',
+      componentPropsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: true,
       generateMocks: false,

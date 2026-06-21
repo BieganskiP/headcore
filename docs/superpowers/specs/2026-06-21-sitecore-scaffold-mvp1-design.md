@@ -89,7 +89,9 @@ Experience Edge GraphQL `layout` query returns the full Layout Service JSON:
 ```graphql
 query GetLayout($site: String!, $routePath: String!, $language: String!) {
   layout(site: $site, routePath: $routePath, language: $language) {
-    item { rendered }
+    item {
+      rendered
+    }
   }
 }
 ```
@@ -120,18 +122,18 @@ generators.
 
 ```ts
 type FieldContract = {
-  name: string;            // e.g. "heading"
-  tsType: string;          // e.g. "Field<string>", "ImageField"
-  optional: boolean;       // true if value was null/absent in layout
-  renderer: 'Text' | 'RichText' | 'Image' | 'Link' | 'raw';
-  sitecoreImport: string | null;  // which Content SDK import the renderer needs
+  name: string; // e.g. "heading"
+  tsType: string; // e.g. "Field<string>", "ImageField"
+  optional: boolean; // true if value was null/absent in layout
+  renderer: "Text" | "RichText" | "Image" | "Link" | "raw";
+  sitecoreImport: string | null; // which Content SDK import the renderer needs
 };
 
 type ComponentContract = {
-  name: string;            // "Hero"
+  name: string; // "Hero"
   fields: FieldContract[];
-  params: string[];        // param keys seen in rendering.params
-  placeholders: string[];  // nested placeholder keys (rendered as comments in MVP 1)
+  params: string[]; // param keys seen in rendering.params
+  placeholders: string[]; // nested placeholder keys (rendered as comments in MVP 1)
 };
 ```
 
@@ -171,17 +173,17 @@ no build step is needed. Secrets via env reference only:
 ```ts
 export default {
   edge: {
-    endpoint: process.env.SITECORE_EDGE_URL!,   // e.g. https://edge.sitecorecloud.io/api/graphql/v1
-    apiKey:   process.env.SITECORE_EDGE_TOKEN!,  // auth header; read from env only
-    site:     'my-site',
-    defaultLanguage: 'en',
+    endpoint: process.env.SITECORE_EDGE_URL!, // e.g. https://edge.sitecorecloud.io/api/graphql/v1
+    apiKey: process.env.SITECORE_EDGE_TOKEN!, // auth header; read from env only
+    site: "my-site",
+    defaultLanguage: "en",
   },
-  componentPath: 'src/components',
-  componentPropsImport: '@/lib/component-props',
-  sitecorePackage: '@sitecore-content-sdk/nextjs',
+  componentPath: "src/components",
+  componentPropsImport: "lib/component-props",
+  sitecorePackage: "@sitecore-content-sdk/nextjs",
   useDatasourceCheck: true,
   generateMocks: true,
-  fieldTypeOverrides: { 'Promo Link': 'LinkField' },
+  fieldTypeOverrides: { "Promo Link": "LinkField" },
 };
 ```
 

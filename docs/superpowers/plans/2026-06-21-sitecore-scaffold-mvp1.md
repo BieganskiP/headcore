@@ -67,6 +67,7 @@ sitecore-scaffold/
 ## Task 1: Initialize workspace root
 
 **Files:**
+
 - Create: `package.json`
 - Create: `tsconfig.base.json`
 - Create: `vitest.config.ts`
@@ -114,11 +115,11 @@ sitecore-scaffold/
 - [ ] **Step 3: Create `vitest.config.ts`**
 
 ```ts
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    include: ['packages/**/test/**/*.test.ts'],
+    include: ["packages/**/test/**/*.test.ts"],
   },
 });
 ```
@@ -151,6 +152,7 @@ git commit -m "chore: initialize npm workspaces monorepo"
 ## Task 2: Core package scaffolding + shared types
 
 **Files:**
+
 - Create: `packages/core/package.json`
 - Create: `packages/core/tsconfig.json`
 - Create: `packages/core/tsup.config.ts`
@@ -165,7 +167,9 @@ git commit -m "chore: initialize npm workspaces monorepo"
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": { ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" } },
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "default": "./dist/index.js" }
+  },
   "scripts": { "build": "tsup" },
   "dependencies": { "jiti": "^1.21.6" }
 }
@@ -184,11 +188,11 @@ git commit -m "chore: initialize npm workspaces monorepo"
 - [ ] **Step 3: Create `packages/core/tsup.config.ts`**
 
 ```ts
-import { defineConfig } from 'tsup';
+import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ['src/index.ts'],
-  format: ['esm'],
+  entry: ["src/index.ts"],
+  format: ["esm"],
   dts: true,
   clean: true,
 });
@@ -230,7 +234,7 @@ export interface RenderingTree {
   placeholders: Record<string, RenderingNode[]>;
 }
 
-export type FieldRenderer = 'Text' | 'RichText' | 'Image' | 'Link' | 'raw';
+export type FieldRenderer = "Text" | "RichText" | "Image" | "Link" | "raw";
 
 export interface FieldContract {
   name: string;
@@ -270,49 +274,69 @@ git commit -m "feat(core): scaffold package and shared types"
 ## Task 3: Field-shape inference
 
 **Files:**
+
 - Create: `packages/core/src/contract/infer.ts`
 - Test: `packages/core/test/contract-infer.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import { inferField } from '../src/contract/infer.js';
+import { describe, it, expect } from "vitest";
+import { inferField } from "../src/contract/infer.js";
 
-describe('inferField', () => {
-  it('infers string field', () => {
-    const r = inferField('heading', { value: 'Hello' }, {});
-    expect(r).toMatchObject({ name: 'heading', tsType: 'Field<string>', optional: false, renderer: 'Text' });
+describe("inferField", () => {
+  it("infers string field", () => {
+    const r = inferField("heading", { value: "Hello" }, {});
+    expect(r).toMatchObject({
+      name: "heading",
+      tsType: "Field<string>",
+      optional: false,
+      renderer: "Text",
+    });
   });
 
-  it('infers image field', () => {
-    const r = inferField('image', { value: { src: 'x.jpg', alt: 'a', width: 10, height: 5 } }, {});
-    expect(r).toMatchObject({ tsType: 'ImageField', renderer: 'Image', sitecoreImport: 'Image' });
+  it("infers image field", () => {
+    const r = inferField(
+      "image",
+      { value: { src: "x.jpg", alt: "a", width: 10, height: 5 } },
+      {},
+    );
+    expect(r).toMatchObject({
+      tsType: "ImageField",
+      renderer: "Image",
+      sitecoreImport: "Image",
+    });
   });
 
-  it('infers link field', () => {
-    const r = inferField('ctaLink', { value: { href: '/x', text: 'go' } }, {});
-    expect(r).toMatchObject({ tsType: 'LinkField', renderer: 'Link', sitecoreImport: 'Link' });
+  it("infers link field", () => {
+    const r = inferField("ctaLink", { value: { href: "/x", text: "go" } }, {});
+    expect(r).toMatchObject({
+      tsType: "LinkField",
+      renderer: "Link",
+      sitecoreImport: "Link",
+    });
   });
 
-  it('infers boolean and number', () => {
-    expect(inferField('on', { value: true }, {}).tsType).toBe('Field<boolean>');
-    expect(inferField('n', { value: 3 }, {}).tsType).toBe('Field<number>');
+  it("infers boolean and number", () => {
+    expect(inferField("on", { value: true }, {}).tsType).toBe("Field<boolean>");
+    expect(inferField("n", { value: 3 }, {}).tsType).toBe("Field<number>");
   });
 
-  it('infers array as ItemReference[]', () => {
-    expect(inferField('cards', { value: [{ id: '1' }] }, {}).tsType).toBe('ItemReference[]');
+  it("infers array as ItemReference[]", () => {
+    expect(inferField("cards", { value: [{ id: "1" }] }, {}).tsType).toBe(
+      "ItemReference[]",
+    );
   });
 
-  it('marks null/absent value optional with TODO renderer raw', () => {
-    const r = inferField('maybe', { value: null }, {});
+  it("marks null/absent value optional with TODO renderer raw", () => {
+    const r = inferField("maybe", { value: null }, {});
     expect(r.optional).toBe(true);
-    expect(r.renderer).toBe('raw');
+    expect(r.renderer).toBe("raw");
   });
 
-  it('applies fieldTypeOverrides by field name', () => {
-    const r = inferField('promo', { value: 'x' }, { promo: 'LinkField' });
-    expect(r.tsType).toBe('LinkField');
+  it("applies fieldTypeOverrides by field name", () => {
+    const r = inferField("promo", { value: "x" }, { promo: "LinkField" });
+    expect(r.tsType).toBe("LinkField");
   });
 });
 ```
@@ -325,10 +349,14 @@ Expected: FAIL — cannot find module `../src/contract/infer.js`.
 - [ ] **Step 3: Write minimal implementation**
 
 ```ts
-import type { FieldContract, RawFieldValue } from '../types.js';
+import type { FieldContract, RawFieldValue } from "../types.js";
 
 function unwrap(raw: RawFieldValue): unknown {
-  if (raw && typeof raw === 'object' && 'value' in (raw as Record<string, unknown>)) {
+  if (
+    raw &&
+    typeof raw === "object" &&
+    "value" in (raw as Record<string, unknown>)
+  ) {
     return (raw as Record<string, unknown>).value;
   }
   return raw;
@@ -342,34 +370,88 @@ export function inferField(
   const value = unwrap(raw);
 
   if (name in overrides) {
-    return { name, tsType: overrides[name], optional: false, renderer: 'raw', sitecoreImport: null };
+    return {
+      name,
+      tsType: overrides[name],
+      optional: false,
+      renderer: "raw",
+      sitecoreImport: null,
+    };
   }
 
-  if (value === null || value === undefined || value === '') {
-    return { name, tsType: 'Field<string>', optional: true, renderer: 'raw', sitecoreImport: null };
+  if (value === null || value === undefined || value === "") {
+    return {
+      name,
+      tsType: "Field<string>",
+      optional: true,
+      renderer: "raw",
+      sitecoreImport: null,
+    };
   }
-  if (typeof value === 'string') {
-    return { name, tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' };
+  if (typeof value === "string") {
+    return {
+      name,
+      tsType: "Field<string>",
+      optional: false,
+      renderer: "Text",
+      sitecoreImport: "Text",
+    };
   }
-  if (typeof value === 'boolean') {
-    return { name, tsType: 'Field<boolean>', optional: false, renderer: 'raw', sitecoreImport: null };
+  if (typeof value === "boolean") {
+    return {
+      name,
+      tsType: "Field<boolean>",
+      optional: false,
+      renderer: "raw",
+      sitecoreImport: null,
+    };
   }
-  if (typeof value === 'number') {
-    return { name, tsType: 'Field<number>', optional: false, renderer: 'raw', sitecoreImport: null };
+  if (typeof value === "number") {
+    return {
+      name,
+      tsType: "Field<number>",
+      optional: false,
+      renderer: "raw",
+      sitecoreImport: null,
+    };
   }
   if (Array.isArray(value)) {
-    return { name, tsType: 'ItemReference[]', optional: false, renderer: 'raw', sitecoreImport: null };
+    return {
+      name,
+      tsType: "ItemReference[]",
+      optional: false,
+      renderer: "raw",
+      sitecoreImport: null,
+    };
   }
-  if (typeof value === 'object') {
+  if (typeof value === "object") {
     const obj = value as Record<string, unknown>;
-    if ('src' in obj) {
-      return { name, tsType: 'ImageField', optional: false, renderer: 'Image', sitecoreImport: 'Image' };
+    if ("src" in obj) {
+      return {
+        name,
+        tsType: "ImageField",
+        optional: false,
+        renderer: "Image",
+        sitecoreImport: "Image",
+      };
     }
-    if ('href' in obj) {
-      return { name, tsType: 'LinkField', optional: false, renderer: 'Link', sitecoreImport: 'Link' };
+    if ("href" in obj) {
+      return {
+        name,
+        tsType: "LinkField",
+        optional: false,
+        renderer: "Link",
+        sitecoreImport: "Link",
+      };
     }
   }
-  return { name, tsType: 'Field<string>', optional: true, renderer: 'raw', sitecoreImport: null };
+  return {
+    name,
+    tsType: "Field<string>",
+    optional: true,
+    renderer: "raw",
+    sitecoreImport: null,
+  };
 }
 ```
 
@@ -390,6 +472,7 @@ git commit -m "feat(core): field-shape type inference"
 ## Task 4: Layout fixture + parser
 
 **Files:**
+
 - Create: `packages/core/test/fixtures/about-us-layout.json`
 - Create: `packages/core/src/inspect/parse.ts`
 - Test: `packages/core/test/inspect-parse.test.ts`
@@ -414,7 +497,14 @@ git commit -m "feat(core): field-shape type inference"
             "fields": {
               "heading": { "value": "About Us" },
               "description": { "value": "<p>Rich</p>" },
-              "image": { "value": { "src": "/-/media/a.jpg", "alt": "a", "width": 100, "height": 50 } },
+              "image": {
+                "value": {
+                  "src": "/-/media/a.jpg",
+                  "alt": "a",
+                  "width": 100,
+                  "height": 50
+                }
+              },
               "ctaLink": { "value": { "href": "/contact", "text": "Contact" } }
             }
           },
@@ -423,10 +513,18 @@ git commit -m "feat(core): field-shape type inference"
             "componentName": "PromoCards",
             "dataSource": "/sitecore/content/Data/Promos/About Promos",
             "params": {},
-            "fields": { "title": { "value": "Promos" }, "cards": { "value": [{ "id": "1" }] } },
+            "fields": {
+              "title": { "value": "Promos" },
+              "cards": { "value": [{ "id": "1" }] }
+            },
             "placeholders": {
               "cards": [
-                { "uid": "u3", "componentName": "Card", "params": {}, "fields": { "label": { "value": "C1" } } }
+                {
+                  "uid": "u3",
+                  "componentName": "Card",
+                  "params": {},
+                  "fields": { "label": { "value": "C1" } }
+                }
               ]
             }
           }
@@ -440,37 +538,44 @@ git commit -m "feat(core): field-shape type inference"
 - [ ] **Step 2: Write the failing test**
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { parseLayout } from '../src/inspect/parse.js';
+import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { parseLayout } from "../src/inspect/parse.js";
 
 const raw = JSON.parse(
-  readFileSync(fileURLToPath(new URL('./fixtures/about-us-layout.json', import.meta.url)), 'utf8'),
+  readFileSync(
+    fileURLToPath(new URL("./fixtures/about-us-layout.json", import.meta.url)),
+    "utf8",
+  ),
 );
 
-describe('parseLayout', () => {
-  it('builds a tree with route name and placeholders', () => {
-    const tree = parseLayout(raw, '/about-us');
-    expect(tree.route).toBe('/about-us');
-    expect(Object.keys(tree.placeholders)).toEqual(['headless-main']);
+describe("parseLayout", () => {
+  it("builds a tree with route name and placeholders", () => {
+    const tree = parseLayout(raw, "/about-us");
+    expect(tree.route).toBe("/about-us");
+    expect(Object.keys(tree.placeholders)).toEqual(["headless-main"]);
   });
 
-  it('captures rendering name, datasource, fields, params', () => {
-    const hero = parseLayout(raw, '/about-us').placeholders['headless-main'][0];
-    expect(hero.componentName).toBe('Hero');
-    expect(hero.dataSource).toContain('About Hero');
-    expect(Object.keys(hero.fields)).toContain('heading');
-    expect(hero.params.variant).toBe('dark');
+  it("captures rendering name, datasource, fields, params", () => {
+    const hero = parseLayout(raw, "/about-us").placeholders["headless-main"][0];
+    expect(hero.componentName).toBe("Hero");
+    expect(hero.dataSource).toContain("About Hero");
+    expect(Object.keys(hero.fields)).toContain("heading");
+    expect(hero.params.variant).toBe("dark");
   });
 
-  it('captures nested placeholders', () => {
-    const promo = parseLayout(raw, '/about-us').placeholders['headless-main'][1];
-    expect(promo.placeholders.cards[0].componentName).toBe('Card');
+  it("captures nested placeholders", () => {
+    const promo = parseLayout(raw, "/about-us").placeholders[
+      "headless-main"
+    ][1];
+    expect(promo.placeholders.cards[0].componentName).toBe("Card");
   });
 
-  it('throws on missing route', () => {
-    expect(() => parseLayout({ sitecore: { route: null } }, '/x')).toThrow(/no route/i);
+  it("throws on missing route", () => {
+    expect(() => parseLayout({ sitecore: { route: null } }, "/x")).toThrow(
+      /no route/i,
+    );
   });
 });
 ```
@@ -483,7 +588,7 @@ Expected: FAIL — cannot find module `../src/inspect/parse.js`.
 - [ ] **Step 4: Write minimal implementation**
 
 ```ts
-import type { RenderingNode, RenderingTree } from '../types.js';
+import type { RenderingNode, RenderingTree } from "../types.js";
 
 interface RawRendering {
   componentName?: string;
@@ -505,7 +610,7 @@ function normalizePlaceholders(
 
 function normalizeRendering(r: RawRendering): RenderingNode {
   return {
-    componentName: r.componentName ?? 'Unknown',
+    componentName: r.componentName ?? "Unknown",
     dataSource: r.dataSource,
     fields: r.fields ?? {},
     params: r.params ?? {},
@@ -514,7 +619,11 @@ function normalizeRendering(r: RawRendering): RenderingNode {
 }
 
 export function parseLayout(raw: unknown, route: string): RenderingTree {
-  const root = raw as { sitecore?: { route?: { placeholders?: Record<string, RawRendering[]> } | null } };
+  const root = raw as {
+    sitecore?: {
+      route?: { placeholders?: Record<string, RawRendering[]> } | null;
+    };
+  };
   const routeData = root?.sitecore?.route;
   if (!routeData) {
     throw new Error(`no route data in layout for ${route}`);
@@ -540,31 +649,35 @@ git commit -m "feat(core): layout JSON parser + fixture"
 ## Task 5: Tree formatter
 
 **Files:**
+
 - Create: `packages/core/src/inspect/render-tree.ts`
 - Test: `packages/core/test/render-tree.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { parseLayout } from '../src/inspect/parse.js';
-import { formatTree } from '../src/inspect/render-tree.js';
+import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { parseLayout } from "../src/inspect/parse.js";
+import { formatTree } from "../src/inspect/render-tree.js";
 
 const raw = JSON.parse(
-  readFileSync(fileURLToPath(new URL('./fixtures/about-us-layout.json', import.meta.url)), 'utf8'),
+  readFileSync(
+    fileURLToPath(new URL("./fixtures/about-us-layout.json", import.meta.url)),
+    "utf8",
+  ),
 );
 
-describe('formatTree', () => {
-  it('renders route, placeholder, renderings, datasource, fields, params', () => {
-    const out = formatTree(parseLayout(raw, '/about-us'));
-    expect(out).toContain('Route: /about-us');
-    expect(out).toContain('Placeholder: headless-main');
-    expect(out).toContain('Hero');
-    expect(out).toContain('datasource:');
-    expect(out).toContain('heading');
-    expect(out).toContain('variant');
+describe("formatTree", () => {
+  it("renders route, placeholder, renderings, datasource, fields, params", () => {
+    const out = formatTree(parseLayout(raw, "/about-us"));
+    expect(out).toContain("Route: /about-us");
+    expect(out).toContain("Placeholder: headless-main");
+    expect(out).toContain("Hero");
+    expect(out).toContain("datasource:");
+    expect(out).toContain("heading");
+    expect(out).toContain("variant");
   });
 });
 ```
@@ -577,9 +690,13 @@ Expected: FAIL — cannot find module.
 - [ ] **Step 3: Write minimal implementation**
 
 ```ts
-import type { RenderingNode, RenderingTree } from '../types.js';
+import type { RenderingNode, RenderingTree } from "../types.js";
 
-function renderNode(node: RenderingNode, lines: string[], indent: string): void {
+function renderNode(
+  node: RenderingNode,
+  lines: string[],
+  indent: string,
+): void {
   lines.push(`${indent}- ${node.componentName}`);
   if (node.dataSource) lines.push(`${indent}  datasource: ${node.dataSource}`);
   const fieldNames = Object.keys(node.fields);
@@ -599,13 +716,13 @@ function renderNode(node: RenderingNode, lines: string[], indent: string): void 
 }
 
 export function formatTree(tree: RenderingTree): string {
-  const lines: string[] = [`Route: ${tree.route}`, ''];
+  const lines: string[] = [`Route: ${tree.route}`, ""];
   for (const [key, renderings] of Object.entries(tree.placeholders)) {
     lines.push(`Placeholder: ${key}`);
-    for (const node of renderings) renderNode(node, lines, '');
-    lines.push('');
+    for (const node of renderings) renderNode(node, lines, "");
+    lines.push("");
   }
-  return lines.join('\n');
+  return lines.join("\n");
 }
 ```
 
@@ -626,40 +743,41 @@ git commit -m "feat(core): rendering tree formatter"
 ## Task 6: Contract builder
 
 **Files:**
+
 - Create: `packages/core/src/contract/build.ts`
 - Test: `packages/core/test/contract-build.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import { buildContract } from '../src/contract/build.js';
-import type { RenderingNode } from '../src/types.js';
+import { describe, it, expect } from "vitest";
+import { buildContract } from "../src/contract/build.js";
+import type { RenderingNode } from "../src/types.js";
 
 const hero: RenderingNode = {
-  componentName: 'Hero',
-  dataSource: '/Data/Hero',
+  componentName: "Hero",
+  dataSource: "/Data/Hero",
   fields: {
-    heading: { value: 'About' },
-    image: { value: { src: 'a.jpg', alt: 'a', width: 1, height: 1 } },
+    heading: { value: "About" },
+    image: { value: { src: "a.jpg", alt: "a", width: 1, height: 1 } },
   },
-  params: { variant: 'dark', backgroundColor: '#000' },
+  params: { variant: "dark", backgroundColor: "#000" },
   placeholders: { cards: [] },
 };
 
-describe('buildContract', () => {
-  it('maps name, fields, params, placeholders', () => {
+describe("buildContract", () => {
+  it("maps name, fields, params, placeholders", () => {
     const c = buildContract(hero, {});
-    expect(c.name).toBe('Hero');
-    expect(c.fields.map((f) => f.name)).toEqual(['heading', 'image']);
-    expect(c.fields[1].tsType).toBe('ImageField');
-    expect(c.params).toEqual(['variant', 'backgroundColor']);
-    expect(c.placeholders).toEqual(['cards']);
+    expect(c.name).toBe("Hero");
+    expect(c.fields.map((f) => f.name)).toEqual(["heading", "image"]);
+    expect(c.fields[1].tsType).toBe("ImageField");
+    expect(c.params).toEqual(["variant", "backgroundColor"]);
+    expect(c.placeholders).toEqual(["cards"]);
   });
 
-  it('passes overrides through to inference', () => {
-    const c = buildContract(hero, { heading: 'LinkField' });
-    expect(c.fields[0].tsType).toBe('LinkField');
+  it("passes overrides through to inference", () => {
+    const c = buildContract(hero, { heading: "LinkField" });
+    expect(c.fields[0].tsType).toBe("LinkField");
   });
 });
 ```
@@ -672,8 +790,8 @@ Expected: FAIL — cannot find module.
 - [ ] **Step 3: Write minimal implementation**
 
 ```ts
-import type { ComponentContract, RenderingNode } from '../types.js';
-import { inferField } from './infer.js';
+import type { ComponentContract, RenderingNode } from "../types.js";
+import { inferField } from "./infer.js";
 
 export function buildContract(
   node: RenderingNode,
@@ -681,7 +799,9 @@ export function buildContract(
 ): ComponentContract {
   return {
     name: node.componentName,
-    fields: Object.entries(node.fields).map(([name, raw]) => inferField(name, raw, overrides)),
+    fields: Object.entries(node.fields).map(([name, raw]) =>
+      inferField(name, raw, overrides),
+    ),
     params: Object.keys(node.params),
     placeholders: Object.keys(node.placeholders),
   };
@@ -705,36 +825,51 @@ git commit -m "feat(core): component contract builder"
 ## Task 7: Codegen — types file
 
 **Files:**
+
 - Create: `packages/core/src/codegen/types-file.ts`
 - Test: `packages/core/test/codegen-types.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import { renderTypesFile } from '../src/codegen/types-file.js';
-import type { ComponentContract } from '../src/types.js';
+import { describe, it, expect } from "vitest";
+import { renderTypesFile } from "../src/codegen/types-file.js";
+import type { ComponentContract } from "../src/types.js";
 
 const contract: ComponentContract = {
-  name: 'Hero',
+  name: "Hero",
   fields: [
-    { name: 'heading', tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' },
-    { name: 'image', tsType: 'ImageField', optional: true, renderer: 'Image', sitecoreImport: 'Image' },
+    {
+      name: "heading",
+      tsType: "Field<string>",
+      optional: false,
+      renderer: "Text",
+      sitecoreImport: "Text",
+    },
+    {
+      name: "image",
+      tsType: "ImageField",
+      optional: true,
+      renderer: "Image",
+      sitecoreImport: "Image",
+    },
   ],
-  params: ['variant'],
+  params: ["variant"],
   placeholders: [],
 };
 
-describe('renderTypesFile', () => {
-  it('emits Fields, Params and Props types', () => {
-    const out = renderTypesFile(contract, '@/lib/component-props');
-    expect(out).toContain('type HeroFields = {');
-    expect(out).toContain('heading: Field<string>;');
-    expect(out).toContain('image?: ImageField;');
-    expect(out).toContain('type HeroParams = {');
-    expect(out).toContain('variant?: string;');
-    expect(out).toContain('type HeroProps = ComponentProps & {');
-    expect(out).toContain("import { ComponentProps } from '@/lib/component-props';");
+describe("renderTypesFile", () => {
+  it("emits Fields, Params and Props types", () => {
+    const out = renderTypesFile(contract, "lib/component-props");
+    expect(out).toContain("type HeroFields = {");
+    expect(out).toContain("heading: Field<string>;");
+    expect(out).toContain("image?: ImageField;");
+    expect(out).toContain("type HeroParams = {");
+    expect(out).toContain("variant?: string;");
+    expect(out).toContain("type HeroProps = ComponentProps & {");
+    expect(out).toContain(
+      "import { ComponentProps } from 'lib/component-props';",
+    );
   });
 });
 ```
@@ -747,13 +882,16 @@ Expected: FAIL — cannot find module.
 - [ ] **Step 3: Write minimal implementation**
 
 ```ts
-import type { ComponentContract } from '../types.js';
+import type { ComponentContract } from "../types.js";
 
-export function renderTypesFile(c: ComponentContract, propsImport: string): string {
+export function renderTypesFile(
+  c: ComponentContract,
+  propsImport: string,
+): string {
   const fieldLines = c.fields
-    .map((f) => `  ${f.name}${f.optional ? '?' : ''}: ${f.tsType};`)
-    .join('\n');
-  const paramLines = c.params.map((p) => `  ${p}?: string;`).join('\n');
+    .map((f) => `  ${f.name}${f.optional ? "?" : ""}: ${f.tsType};`)
+    .join("\n");
+  const paramLines = c.params.map((p) => `  ${p}?: string;`).join("\n");
 
   return `import { Field, ImageField, LinkField } from '@sitecore-content-sdk/nextjs';
 import { ComponentProps } from '${propsImport}';
@@ -793,53 +931,82 @@ git commit -m "feat(core): codegen types file"
 ## Task 8: Codegen — component file
 
 **Files:**
+
 - Create: `packages/core/src/codegen/component-file.ts`
 - Test: `packages/core/test/codegen-component.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import { renderComponentFile } from '../src/codegen/component-file.js';
-import type { ComponentContract } from '../src/types.js';
+import { describe, it, expect } from "vitest";
+import { renderComponentFile } from "../src/codegen/component-file.js";
+import type { ComponentContract } from "../src/types.js";
 
 const contract: ComponentContract = {
-  name: 'Hero',
+  name: "Hero",
   fields: [
-    { name: 'heading', tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' },
-    { name: 'description', tsType: 'Field<string>', optional: true, renderer: 'RichText', sitecoreImport: 'RichText' },
-    { name: 'image', tsType: 'ImageField', optional: true, renderer: 'Image', sitecoreImport: 'Image' },
-    { name: 'ctaLink', tsType: 'LinkField', optional: true, renderer: 'Link', sitecoreImport: 'Link' },
+    {
+      name: "heading",
+      tsType: "Field<string>",
+      optional: false,
+      renderer: "Text",
+      sitecoreImport: "Text",
+    },
+    {
+      name: "description",
+      tsType: "Field<string>",
+      optional: true,
+      renderer: "RichText",
+      sitecoreImport: "RichText",
+    },
+    {
+      name: "image",
+      tsType: "ImageField",
+      optional: true,
+      renderer: "Image",
+      sitecoreImport: "Image",
+    },
+    {
+      name: "ctaLink",
+      tsType: "LinkField",
+      optional: true,
+      renderer: "Link",
+      sitecoreImport: "Link",
+    },
   ],
-  params: ['variant'],
+  params: ["variant"],
   placeholders: [],
 };
 
-describe('renderComponentFile', () => {
-  it('imports only used renderers and wraps in withDatasourceCheck when enabled', () => {
+describe("renderComponentFile", () => {
+  it("imports only used renderers and wraps in withDatasourceCheck when enabled", () => {
     const out = renderComponentFile(contract, {
-      propsImport: '@/lib/component-props',
-      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      propsImport: "lib/component-props",
+      sitecorePackage: "@sitecore-content-sdk/nextjs",
       useDatasourceCheck: true,
     });
-    expect(out).toContain('Text');
-    expect(out).toContain('RichText');
-    expect(out).toContain('Image as SitecoreImage');
-    expect(out).toContain('Link as SitecoreLink');
-    expect(out).toContain('withDatasourceCheck');
+    expect(out).toContain("Text");
+    expect(out).toContain("RichText");
+    expect(out).toContain("Image as SitecoreImage");
+    expect(out).toContain("Link as SitecoreLink");
+    expect(out).toContain("withDatasourceCheck");
     expect(out).toContain('<Text tag="h1" field={fields.heading} />');
-    expect(out).toContain('{fields.image && <SitecoreImage field={fields.image} />}');
-    expect(out).toContain('export default withDatasourceCheck()<HeroProps>(Hero);');
+    expect(out).toContain(
+      "{fields.image && <SitecoreImage field={fields.image} />}",
+    );
+    expect(out).toContain(
+      "export default withDatasourceCheck()<HeroProps>(Hero);",
+    );
   });
 
-  it('exports plainly when datasource check disabled', () => {
+  it("exports plainly when datasource check disabled", () => {
     const out = renderComponentFile(contract, {
-      propsImport: '@/lib/component-props',
-      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      propsImport: "lib/component-props",
+      sitecorePackage: "@sitecore-content-sdk/nextjs",
       useDatasourceCheck: false,
     });
-    expect(out).toContain('export default Hero;');
-    expect(out).not.toContain('withDatasourceCheck');
+    expect(out).toContain("export default Hero;");
+    expect(out).not.toContain("withDatasourceCheck");
   });
 });
 ```
@@ -852,7 +1019,7 @@ Expected: FAIL — cannot find module.
 - [ ] **Step 3: Write minimal implementation**
 
 ```ts
-import type { ComponentContract, FieldContract } from '../types.js';
+import type { ComponentContract, FieldContract } from "../types.js";
 
 interface ComponentOptions {
   propsImport: string;
@@ -861,34 +1028,41 @@ interface ComponentOptions {
 }
 
 const IMPORT_ALIAS: Record<string, string> = {
-  Image: 'Image as SitecoreImage',
-  Link: 'Link as SitecoreLink',
+  Image: "Image as SitecoreImage",
+  Link: "Link as SitecoreLink",
 };
 
 function rendererJsx(f: FieldContract, first: boolean): string {
-  const guard = (jsx: string) => (f.optional ? `      {fields.${f.name} && ${jsx}}` : `      ${jsx}`);
+  const guard = (jsx: string) =>
+    f.optional ? `      {fields.${f.name} && ${jsx}}` : `      ${jsx}`;
   switch (f.renderer) {
-    case 'Text':
-      return guard(`<Text tag="${first ? 'h1' : 'span'}" field={fields.${f.name}} />`);
-    case 'RichText':
+    case "Text":
+      return guard(
+        `<Text tag="${first ? "h1" : "span"}" field={fields.${f.name}} />`,
+      );
+    case "RichText":
       return guard(`<RichText field={fields.${f.name}} />`);
-    case 'Image':
+    case "Image":
       return guard(`<SitecoreImage field={fields.${f.name}} />`);
-    case 'Link':
+    case "Link":
       return guard(`<SitecoreLink field={fields.${f.name}} />`);
     default:
       return `      {/* TODO: render field "${f.name}" (${f.tsType}) */}`;
   }
 }
 
-export function renderComponentFile(c: ComponentContract, opts: ComponentOptions): string {
+export function renderComponentFile(
+  c: ComponentContract,
+  opts: ComponentOptions,
+): string {
   const renderers = new Set<string>();
-  for (const f of c.fields) if (f.sitecoreImport) renderers.add(f.sitecoreImport);
+  for (const f of c.fields)
+    if (f.sitecoreImport) renderers.add(f.sitecoreImport);
   const importNames = [...renderers].map((r) => IMPORT_ALIAS[r] ?? r);
-  if (opts.useDatasourceCheck) importNames.push('withDatasourceCheck');
+  if (opts.useDatasourceCheck) importNames.push("withDatasourceCheck");
 
   const imports = `import {
-${importNames.map((n) => `  ${n},`).join('\n')}
+${importNames.map((n) => `  ${n},`).join("\n")}
 } from '${opts.sitecorePackage}';
 
 import { ${c.name}Props } from './${c.name}.types';`;
@@ -896,11 +1070,11 @@ import { ${c.name}Props } from './${c.name}.types';`;
   let firstText = true;
   const body = c.fields
     .map((f) => {
-      const isFirst = f.renderer === 'Text' && firstText;
+      const isFirst = f.renderer === "Text" && firstText;
       if (isFirst) firstText = false;
       return rendererJsx(f, isFirst);
     })
-    .join('\n');
+    .join("\n");
 
   const component = `const ${c.name} = ({ fields, params }: ${c.name}Props) => {
   return (
@@ -935,6 +1109,7 @@ git commit -m "feat(core): codegen component file"
 ## Task 9: Codegen — mock file + orchestrator
 
 **Files:**
+
 - Create: `packages/core/src/codegen/mock-file.ts`
 - Create: `packages/core/src/codegen/index.ts`
 - Test: `packages/core/test/codegen-mock.test.ts`
@@ -942,63 +1117,73 @@ git commit -m "feat(core): codegen component file"
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import { renderMockFile } from '../src/codegen/mock-file.js';
-import { generateFiles } from '../src/codegen/index.js';
-import type { ComponentContract, RenderingNode } from '../src/types.js';
+import { describe, it, expect } from "vitest";
+import { renderMockFile } from "../src/codegen/mock-file.js";
+import { generateFiles } from "../src/codegen/index.js";
+import type { ComponentContract, RenderingNode } from "../src/types.js";
 
 const node: RenderingNode = {
-  componentName: 'Hero',
-  dataSource: '/Data/Hero',
-  fields: { heading: { value: 'About' } },
-  params: { variant: 'dark' },
+  componentName: "Hero",
+  dataSource: "/Data/Hero",
+  fields: { heading: { value: "About" } },
+  params: { variant: "dark" },
   placeholders: {},
 };
 
 const contract: ComponentContract = {
-  name: 'Hero',
-  fields: [{ name: 'heading', tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' }],
-  params: ['variant'],
+  name: "Hero",
+  fields: [
+    {
+      name: "heading",
+      tsType: "Field<string>",
+      optional: false,
+      renderer: "Text",
+      sitecoreImport: "Text",
+    },
+  ],
+  params: ["variant"],
   placeholders: [],
 };
 
-describe('renderMockFile', () => {
-  it('serializes the rendering fields and params as JSON', () => {
+describe("renderMockFile", () => {
+  it("serializes the rendering fields and params as JSON", () => {
     const out = renderMockFile(node);
     const parsed = JSON.parse(out);
-    expect(parsed.fields.heading.value).toBe('About');
-    expect(parsed.params.variant).toBe('dark');
+    expect(parsed.fields.heading.value).toBe("About");
+    expect(parsed.params.variant).toBe("dark");
   });
 });
 
-describe('generateFiles', () => {
-  it('produces three files at componentPath when mocks enabled', () => {
+describe("generateFiles", () => {
+  it("produces three files at componentPath when mocks enabled", () => {
     const files = generateFiles(contract, node, {
-      componentPath: 'src/components',
-      componentPropsImport: '@/lib/component-props',
-      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      componentPath: "src/components",
+      componentPropsImport: "lib/component-props",
+      sitecorePackage: "@sitecore-content-sdk/nextjs",
       useDatasourceCheck: true,
       generateMocks: true,
       fieldTypeOverrides: {},
     });
     const paths = files.map((f) => f.path).sort();
     expect(paths).toEqual([
-      'src/components/Hero.mock.json',
-      'src/components/Hero.tsx',
-      'src/components/Hero.types.ts',
+      "src/components/Hero.mock.json",
+      "src/components/Hero.tsx",
+      "src/components/Hero.types.ts",
     ]);
   });
 
-  it('omits mock file when mocks disabled', () => {
+  it("omits mock file when mocks disabled", () => {
     const files = generateFiles(contract, node, {
-      componentPath: 'src/components',
-      componentPropsImport: '@/lib/component-props',
-      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      componentPath: "src/components",
+      componentPropsImport: "lib/component-props",
+      sitecorePackage: "@sitecore-content-sdk/nextjs",
       useDatasourceCheck: true,
       generateMocks: false,
       fieldTypeOverrides: {},
     });
-    expect(files.map((f) => f.path)).not.toContain('src/components/Hero.mock.json');
+    expect(files.map((f) => f.path)).not.toContain(
+      "src/components/Hero.mock.json",
+    );
   });
 });
 ```
@@ -1011,22 +1196,29 @@ Expected: FAIL — cannot find modules.
 - [ ] **Step 3: Write `mock-file.ts`**
 
 ```ts
-import type { RenderingNode } from '../types.js';
+import type { RenderingNode } from "../types.js";
 
 export function renderMockFile(node: RenderingNode): string {
-  return JSON.stringify({ fields: node.fields, params: node.params }, null, 2) + '\n';
+  return (
+    JSON.stringify({ fields: node.fields, params: node.params }, null, 2) + "\n"
+  );
 }
 ```
 
 - [ ] **Step 4: Write `index.ts` orchestrator**
 
 ```ts
-import type { ComponentContract, GeneratedFile, RenderingNode, ScaffoldConfig } from '../types.js';
-import { renderTypesFile } from './types-file.js';
-import { renderComponentFile } from './component-file.js';
-import { renderMockFile } from './mock-file.js';
+import type {
+  ComponentContract,
+  GeneratedFile,
+  RenderingNode,
+  ScaffoldConfig,
+} from "../types.js";
+import { renderTypesFile } from "./types-file.js";
+import { renderComponentFile } from "./component-file.js";
+import { renderMockFile } from "./mock-file.js";
 
-type CodegenConfig = Omit<ScaffoldConfig, 'edge'>;
+type CodegenConfig = Omit<ScaffoldConfig, "edge">;
 
 export function generateFiles(
   contract: ComponentContract,
@@ -1035,7 +1227,10 @@ export function generateFiles(
 ): GeneratedFile[] {
   const base = `${config.componentPath}/${contract.name}`;
   const files: GeneratedFile[] = [
-    { path: `${base}.types.ts`, contents: renderTypesFile(contract, config.componentPropsImport) },
+    {
+      path: `${base}.types.ts`,
+      contents: renderTypesFile(contract, config.componentPropsImport),
+    },
     {
       path: `${base}.tsx`,
       contents: renderComponentFile(contract, {
@@ -1069,59 +1264,68 @@ git commit -m "feat(core): codegen mock file + orchestrator"
 ## Task 10: Config loader
 
 **Files:**
+
 - Create: `packages/core/src/config/load.ts`
 - Test: `packages/core/test/config-load.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-import { describe, it, expect, beforeEach } from 'vitest';
-import { writeFileSync, mkdtempSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { loadConfig } from '../src/config/load.js';
+import { describe, it, expect, beforeEach } from "vitest";
+import { writeFileSync, mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { loadConfig } from "../src/config/load.js";
 
 function writeConfig(dir: string, body: string): string {
-  const p = join(dir, 'sitecore-scaffold.config.ts');
-  writeFileSync(p, body, 'utf8');
+  const p = join(dir, "sitecore-scaffold.config.ts");
+  writeFileSync(p, body, "utf8");
   return p;
 }
 
-describe('loadConfig', () => {
+describe("loadConfig", () => {
   let dir: string;
   beforeEach(() => {
-    dir = mkdtempSync(join(tmpdir(), 'scaffold-'));
-    process.env.SITECORE_EDGE_URL = 'https://edge.example/api/graphql/v1';
-    process.env.SITECORE_EDGE_TOKEN = 'secret-token';
+    dir = mkdtempSync(join(tmpdir(), "scaffold-"));
+    process.env.SITECORE_EDGE_URL = "https://edge.example/api/graphql/v1";
+    process.env.SITECORE_EDGE_TOKEN = "secret-token";
   });
 
-  it('loads a valid config with env resolution', async () => {
-    const p = writeConfig(dir, `export default {
+  it("loads a valid config with env resolution", async () => {
+    const p = writeConfig(
+      dir,
+      `export default {
       edge: { endpoint: process.env.SITECORE_EDGE_URL, apiKey: process.env.SITECORE_EDGE_TOKEN, site: 'my-site', defaultLanguage: 'en' },
       componentPath: 'src/components',
-      componentPropsImport: '@/lib/component-props',
+      componentPropsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: true,
       generateMocks: true,
       fieldTypeOverrides: {},
-    };`);
+    };`,
+    );
     const cfg = await loadConfig(p);
-    expect(cfg.edge.endpoint).toBe('https://edge.example/api/graphql/v1');
-    expect(cfg.edge.apiKey).toBe('secret-token');
-    expect(cfg.componentPath).toBe('src/components');
+    expect(cfg.edge.endpoint).toBe("https://edge.example/api/graphql/v1");
+    expect(cfg.edge.apiKey).toBe("secret-token");
+    expect(cfg.componentPath).toBe("src/components");
   });
 
-  it('throws a clear error when edge.endpoint is missing', async () => {
-    const p = writeConfig(dir, `export default {
+  it("throws a clear error when edge.endpoint is missing", async () => {
+    const p = writeConfig(
+      dir,
+      `export default {
       edge: { apiKey: 'x', site: 's', defaultLanguage: 'en' },
-      componentPath: 'src/components', componentPropsImport: '@/lib/component-props',
+      componentPath: 'src/components', componentPropsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs', useDatasourceCheck: true, generateMocks: true, fieldTypeOverrides: {},
-    };`);
+    };`,
+    );
     await expect(loadConfig(p)).rejects.toThrow(/edge\.endpoint/);
   });
 
-  it('throws when config file does not exist', async () => {
-    await expect(loadConfig(join(dir, 'missing.config.ts'))).rejects.toThrow(/not found/i);
+  it("throws when config file does not exist", async () => {
+    await expect(loadConfig(join(dir, "missing.config.ts"))).rejects.toThrow(
+      /not found/i,
+    );
   });
 });
 ```
@@ -1134,14 +1338,14 @@ Expected: FAIL — cannot find module.
 - [ ] **Step 3: Write minimal implementation**
 
 ```ts
-import { existsSync } from 'node:fs';
-import { createJiti } from 'jiti';
-import type { ScaffoldConfig } from '../types.js';
+import { existsSync } from "node:fs";
+import { createJiti } from "jiti";
+import type { ScaffoldConfig } from "../types.js";
 
 const REQUIRED_STRING_FIELDS: Array<keyof ScaffoldConfig> = [
-  'componentPath',
-  'componentPropsImport',
-  'sitecorePackage',
+  "componentPath",
+  "componentPropsImport",
+  "sitecorePackage",
 ];
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -1153,14 +1357,28 @@ export async function loadConfig(path: string): Promise<ScaffoldConfig> {
     throw new Error(`Config file not found: ${path}`);
   }
   const jiti = createJiti(import.meta.url, { interopDefault: true });
-  const loaded = (await jiti.import(path, { default: true })) as Partial<ScaffoldConfig>;
+  const loaded = (await jiti.import(path, {
+    default: true,
+  })) as Partial<ScaffoldConfig>;
 
-  assert(loaded && typeof loaded === 'object', 'Config must export a default object');
+  assert(
+    loaded && typeof loaded === "object",
+    "Config must export a default object",
+  );
   assert(loaded.edge, 'Config is missing "edge" section');
-  assert(loaded.edge.endpoint, 'Config is missing "edge.endpoint" (check SITECORE_EDGE_URL env var)');
-  assert(loaded.edge.apiKey, 'Config is missing "edge.apiKey" (check SITECORE_EDGE_TOKEN env var)');
+  assert(
+    loaded.edge.endpoint,
+    'Config is missing "edge.endpoint" (check SITECORE_EDGE_URL env var)',
+  );
+  assert(
+    loaded.edge.apiKey,
+    'Config is missing "edge.apiKey" (check SITECORE_EDGE_TOKEN env var)',
+  );
   assert(loaded.edge.site, 'Config is missing "edge.site"');
-  assert(loaded.edge.defaultLanguage, 'Config is missing "edge.defaultLanguage"');
+  assert(
+    loaded.edge.defaultLanguage,
+    'Config is missing "edge.defaultLanguage"',
+  );
   for (const field of REQUIRED_STRING_FIELDS) {
     assert(loaded[field], `Config is missing "${field}"`);
   }
@@ -1194,6 +1412,7 @@ git commit -m "feat(core): config loader with validation"
 ## Task 11: Edge client
 
 **Files:**
+
 - Create: `packages/core/src/edge/query.ts`
 - Create: `packages/core/src/edge/client.ts`
 - Test: `packages/core/test/edge-client.test.ts`
@@ -1201,55 +1420,71 @@ git commit -m "feat(core): config loader with validation"
 - [ ] **Step 1: Write the failing test** (injects a fake `fetch`)
 
 ```ts
-import { describe, it, expect, vi } from 'vitest';
-import { EdgeClient } from '../src/edge/client.js';
+import { describe, it, expect, vi } from "vitest";
+import { EdgeClient } from "../src/edge/client.js";
 
 const config = {
-  endpoint: 'https://edge.example/api/graphql/v1',
-  apiKey: 'secret-token',
-  site: 'my-site',
-  defaultLanguage: 'en',
+  endpoint: "https://edge.example/api/graphql/v1",
+  apiKey: "secret-token",
+  site: "my-site",
+  defaultLanguage: "en",
 };
 
-describe('EdgeClient.getLayout', () => {
-  it('posts the layout query and returns rendered JSON', async () => {
+describe("EdgeClient.getLayout", () => {
+  it("posts the layout query and returns rendered JSON", async () => {
     const rendered = { sitecore: { route: { placeholders: {} } } };
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ data: { layout: { item: { rendered } } } }),
     });
     const client = new EdgeClient(config, fetchMock as unknown as typeof fetch);
-    const result = await client.getLayout('/about-us', 'en');
+    const result = await client.getLayout("/about-us", "en");
     expect(result).toEqual(rendered);
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe(config.endpoint);
-    expect((init.headers as Record<string, string>).sc_apikey).toBe('secret-token');
-    expect(JSON.parse(init.body as string).variables).toMatchObject({ site: 'my-site', routePath: '/about-us', language: 'en' });
+    expect((init.headers as Record<string, string>).sc_apikey).toBe(
+      "secret-token",
+    );
+    expect(JSON.parse(init.body as string).variables).toMatchObject({
+      site: "my-site",
+      routePath: "/about-us",
+      language: "en",
+    });
   });
 
-  it('throws masking the key on HTTP error', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 401, text: async () => 'unauthorized' });
+  it("throws masking the key on HTTP error", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({
+        ok: false,
+        status: 401,
+        text: async () => "unauthorized",
+      });
     const client = new EdgeClient(config, fetchMock as unknown as typeof fetch);
-    await expect(client.getLayout('/x', 'en')).rejects.toThrow(/401/);
-    await expect(client.getLayout('/x', 'en')).rejects.not.toThrow(/secret-token/);
+    await expect(client.getLayout("/x", "en")).rejects.toThrow(/401/);
+    await expect(client.getLayout("/x", "en")).rejects.not.toThrow(
+      /secret-token/,
+    );
   });
 
-  it('throws on GraphQL errors array', async () => {
+  it("throws on GraphQL errors array", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ errors: [{ message: 'bad query' }] }),
+      json: async () => ({ errors: [{ message: "bad query" }] }),
     });
     const client = new EdgeClient(config, fetchMock as unknown as typeof fetch);
-    await expect(client.getLayout('/x', 'en')).rejects.toThrow(/bad query/);
+    await expect(client.getLayout("/x", "en")).rejects.toThrow(/bad query/);
   });
 
-  it('throws a clear error when route layout is null', async () => {
+  it("throws a clear error when route layout is null", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ data: { layout: { item: null } } }),
     });
     const client = new EdgeClient(config, fetchMock as unknown as typeof fetch);
-    await expect(client.getLayout('/missing', 'en')).rejects.toThrow(/no route/i);
+    await expect(client.getLayout("/missing", "en")).rejects.toThrow(
+      /no route/i,
+    );
   });
 });
 ```
@@ -1272,8 +1507,8 @@ export const LAYOUT_QUERY = `query GetLayout($site: String!, $routePath: String!
 - [ ] **Step 4: Write `client.ts`**
 
 ```ts
-import type { EdgeConfig } from '../types.js';
-import { LAYOUT_QUERY } from './query.js';
+import type { EdgeConfig } from "../types.js";
+import { LAYOUT_QUERY } from "./query.js";
 
 interface LayoutResponse {
   data?: { layout?: { item?: { rendered?: unknown } | null } };
@@ -1288,8 +1523,11 @@ export class EdgeClient {
 
   async getLayout(routePath: string, language: string): Promise<unknown> {
     const res = await this.fetchFn(this.config.endpoint, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', sc_apikey: this.config.apiKey },
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        sc_apikey: this.config.apiKey,
+      },
       body: JSON.stringify({
         query: LAYOUT_QUERY,
         variables: { site: this.config.site, routePath, language },
@@ -1297,18 +1535,22 @@ export class EdgeClient {
     });
 
     if (!res.ok) {
-      const text = await res.text().catch(() => '');
+      const text = await res.text().catch(() => "");
       throw new Error(`Edge request failed: HTTP ${res.status} ${text}`.trim());
     }
 
     const json = (await res.json()) as LayoutResponse;
     if (json.errors?.length) {
-      throw new Error(`Edge GraphQL error: ${json.errors.map((e) => e.message).join('; ')}`);
+      throw new Error(
+        `Edge GraphQL error: ${json.errors.map((e) => e.message).join("; ")}`,
+      );
     }
 
     const rendered = json.data?.layout?.item?.rendered;
     if (!rendered) {
-      throw new Error(`no route found at "${routePath}" for site "${this.config.site}" / lang "${language}"`);
+      throw new Error(
+        `no route found at "${routePath}" for site "${this.config.site}" / lang "${language}"`,
+      );
     }
     return rendered;
   }
@@ -1332,23 +1574,24 @@ git commit -m "feat(core): Experience Edge layout client"
 ## Task 12: Core public API barrel
 
 **Files:**
+
 - Create: `packages/core/src/index.ts`
 
 - [ ] **Step 1: Write the barrel**
 
 ```ts
-export * from './types.js';
-export { loadConfig } from './config/load.js';
-export { EdgeClient } from './edge/client.js';
-export { LAYOUT_QUERY } from './edge/query.js';
-export { parseLayout } from './inspect/parse.js';
-export { formatTree } from './inspect/render-tree.js';
-export { inferField } from './contract/infer.js';
-export { buildContract } from './contract/build.js';
-export { generateFiles } from './codegen/index.js';
-export { renderTypesFile } from './codegen/types-file.js';
-export { renderComponentFile } from './codegen/component-file.js';
-export { renderMockFile } from './codegen/mock-file.js';
+export * from "./types.js";
+export { loadConfig } from "./config/load.js";
+export { EdgeClient } from "./edge/client.js";
+export { LAYOUT_QUERY } from "./edge/query.js";
+export { parseLayout } from "./inspect/parse.js";
+export { formatTree } from "./inspect/render-tree.js";
+export { inferField } from "./contract/infer.js";
+export { buildContract } from "./contract/build.js";
+export { generateFiles } from "./codegen/index.js";
+export { renderTypesFile } from "./codegen/types-file.js";
+export { renderComponentFile } from "./codegen/component-file.js";
+export { renderMockFile } from "./codegen/mock-file.js";
 ```
 
 - [ ] **Step 2: Build the package to verify the barrel resolves**
@@ -1373,6 +1616,7 @@ git commit -m "feat(core): public API barrel"
 ## Task 13: CLI package scaffolding + arg parser
 
 **Files:**
+
 - Create: `packages/cli/package.json`
 - Create: `packages/cli/tsconfig.json`
 - Create: `packages/cli/tsup.config.ts`
@@ -1405,41 +1649,61 @@ git commit -m "feat(core): public API barrel"
 - [ ] **Step 3: Create `packages/cli/tsup.config.ts`**
 
 ```ts
-import { defineConfig } from 'tsup';
+import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ['src/index.ts'],
-  format: ['esm'],
+  entry: ["src/index.ts"],
+  format: ["esm"],
   clean: true,
-  banner: { js: '#!/usr/bin/env node' },
+  banner: { js: "#!/usr/bin/env node" },
 });
 ```
 
 - [ ] **Step 4: Write the failing test**
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import { parseArgs } from '../src/args.js';
+import { describe, it, expect } from "vitest";
+import { parseArgs } from "../src/args.js";
 
-describe('parseArgs', () => {
-  it('parses inspect command with route', () => {
-    expect(parseArgs(['inspect', '/about-us'])).toEqual({
-      command: 'inspect', name: undefined, route: '/about-us',
-      lang: undefined, dryRun: false, force: false,
+describe("parseArgs", () => {
+  it("parses inspect command with route", () => {
+    expect(parseArgs(["inspect", "/about-us"])).toEqual({
+      command: "inspect",
+      name: undefined,
+      route: "/about-us",
+      lang: undefined,
+      dryRun: false,
+      force: false,
     });
   });
 
-  it('parses component command with name and flags', () => {
-    expect(parseArgs(['component', 'Hero', '--route', '/about-us', '--lang', 'da', '--dry-run', '--force'])).toEqual({
-      command: 'component', name: 'Hero', route: '/about-us', lang: 'da', dryRun: true, force: true,
+  it("parses component command with name and flags", () => {
+    expect(
+      parseArgs([
+        "component",
+        "Hero",
+        "--route",
+        "/about-us",
+        "--lang",
+        "da",
+        "--dry-run",
+        "--force",
+      ]),
+    ).toEqual({
+      command: "component",
+      name: "Hero",
+      route: "/about-us",
+      lang: "da",
+      dryRun: true,
+      force: true,
     });
   });
 
-  it('throws on unknown command', () => {
-    expect(() => parseArgs(['frobnicate'])).toThrow(/unknown command/i);
+  it("throws on unknown command", () => {
+    expect(() => parseArgs(["frobnicate"])).toThrow(/unknown command/i);
   });
 
-  it('throws when no command given', () => {
+  it("throws when no command given", () => {
     expect(() => parseArgs([])).toThrow(/usage/i);
   });
 });
@@ -1454,7 +1718,7 @@ Expected: FAIL — cannot find module.
 
 ```ts
 export interface ParsedArgs {
-  command: 'inspect' | 'component';
+  command: "inspect" | "component";
   name: string | undefined;
   route: string | undefined;
   lang: string | undefined;
@@ -1469,7 +1733,7 @@ const USAGE = `usage:
 export function parseArgs(argv: string[]): ParsedArgs {
   if (argv.length === 0) throw new Error(USAGE);
   const [command, ...rest] = argv;
-  if (command !== 'inspect' && command !== 'component') {
+  if (command !== "inspect" && command !== "component") {
     throw new Error(`unknown command "${command}"\n${USAGE}`);
   }
 
@@ -1481,15 +1745,22 @@ export function parseArgs(argv: string[]): ParsedArgs {
 
   for (let i = 0; i < rest.length; i++) {
     const arg = rest[i];
-    if (arg === '--route') route = rest[++i];
-    else if (arg === '--lang') lang = rest[++i];
-    else if (arg === '--dry-run') dryRun = true;
-    else if (arg === '--force') force = true;
+    if (arg === "--route") route = rest[++i];
+    else if (arg === "--lang") lang = rest[++i];
+    else if (arg === "--dry-run") dryRun = true;
+    else if (arg === "--force") force = true;
     else positionals.push(arg);
   }
 
-  if (command === 'inspect') {
-    return { command, name: undefined, route: positionals[0], lang, dryRun, force };
+  if (command === "inspect") {
+    return {
+      command,
+      name: undefined,
+      route: positionals[0],
+      lang,
+      dryRun,
+      force,
+    };
   }
   return { command, name: positionals[0], route, lang, dryRun, force };
 }
@@ -1515,42 +1786,62 @@ git commit -m "feat(cli): package scaffold + arg parser"
 ## Task 14: Inspect command
 
 **Files:**
+
 - Create: `packages/cli/src/commands/inspect.ts`
 - Test: `packages/cli/test/inspect-command.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-import { describe, it, expect, vi } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { runInspect } from '../src/commands/inspect.js';
+import { describe, it, expect, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { runInspect } from "../src/commands/inspect.js";
 
 const rendered = JSON.parse(
-  readFileSync(fileURLToPath(new URL('../../core/test/fixtures/about-us-layout.json', import.meta.url)), 'utf8'),
+  readFileSync(
+    fileURLToPath(
+      new URL("../../core/test/fixtures/about-us-layout.json", import.meta.url),
+    ),
+    "utf8",
+  ),
 );
 
 const config = {
-  edge: { endpoint: 'https://e', apiKey: 'k', site: 's', defaultLanguage: 'en' },
-  componentPath: 'src/components', componentPropsImport: '@/lib/component-props',
-  sitecorePackage: '@sitecore-content-sdk/nextjs', useDatasourceCheck: true, generateMocks: true, fieldTypeOverrides: {},
+  edge: {
+    endpoint: "https://e",
+    apiKey: "k",
+    site: "s",
+    defaultLanguage: "en",
+  },
+  componentPath: "src/components",
+  componentPropsImport: "lib/component-props",
+  sitecorePackage: "@sitecore-content-sdk/nextjs",
+  useDatasourceCheck: true,
+  generateMocks: true,
+  fieldTypeOverrides: {},
 };
 
-describe('runInspect', () => {
-  it('returns a formatted tree string for the route', async () => {
+describe("runInspect", () => {
+  it("returns a formatted tree string for the route", async () => {
     const deps = {
       loadConfig: vi.fn().mockResolvedValue(config),
       getLayout: vi.fn().mockResolvedValue(rendered),
     };
-    const out = await runInspect({ route: '/about-us', lang: undefined }, deps);
-    expect(out).toContain('Route: /about-us');
-    expect(out).toContain('Hero');
-    expect(deps.getLayout).toHaveBeenCalledWith('/about-us', 'en');
+    const out = await runInspect({ route: "/about-us", lang: undefined }, deps);
+    expect(out).toContain("Route: /about-us");
+    expect(out).toContain("Hero");
+    expect(deps.getLayout).toHaveBeenCalledWith("/about-us", "en");
   });
 
-  it('throws when route flag missing', async () => {
-    const deps = { loadConfig: vi.fn().mockResolvedValue(config), getLayout: vi.fn() };
-    await expect(runInspect({ route: undefined, lang: undefined }, deps)).rejects.toThrow(/route/i);
+  it("throws when route flag missing", async () => {
+    const deps = {
+      loadConfig: vi.fn().mockResolvedValue(config),
+      getLayout: vi.fn(),
+    };
+    await expect(
+      runInspect({ route: undefined, lang: undefined }, deps),
+    ).rejects.toThrow(/route/i);
   });
 });
 ```
@@ -1563,7 +1854,12 @@ Expected: FAIL — cannot find module.
 - [ ] **Step 3: Write `inspect.ts`**
 
 ```ts
-import { loadConfig as defaultLoadConfig, EdgeClient, parseLayout, formatTree } from '@sitecore-scaffold/core';
+import {
+  loadConfig as defaultLoadConfig,
+  EdgeClient,
+  parseLayout,
+  formatTree,
+} from "@sitecore-scaffold/core";
 
 export interface InspectDeps {
   loadConfig: typeof defaultLoadConfig;
@@ -1577,14 +1873,20 @@ export interface InspectInput {
 
 const CONFIG_PATH = `${process.cwd()}/sitecore-scaffold.config.ts`;
 
-export async function runInspect(input: InspectInput, deps?: Partial<InspectDeps>): Promise<string> {
-  if (!input.route) throw new Error('inspect requires a <route> argument');
+export async function runInspect(
+  input: InspectInput,
+  deps?: Partial<InspectDeps>,
+): Promise<string> {
+  if (!input.route) throw new Error("inspect requires a <route> argument");
 
   const loadConfig = deps?.loadConfig ?? defaultLoadConfig;
   const config = await loadConfig(CONFIG_PATH);
   const lang = input.lang ?? config.edge.defaultLanguage;
 
-  const getLayout = deps?.getLayout ?? ((route: string, l: string) => new EdgeClient(config.edge).getLayout(route, l));
+  const getLayout =
+    deps?.getLayout ??
+    ((route: string, l: string) =>
+      new EdgeClient(config.edge).getLayout(route, l));
   const rendered = await getLayout(input.route, lang);
 
   return formatTree(parseLayout(rendered, input.route));
@@ -1608,71 +1910,129 @@ git commit -m "feat(cli): inspect command"
 ## Task 15: Component command
 
 **Files:**
+
 - Create: `packages/cli/src/commands/component.ts`
 - Test: `packages/cli/test/component-command.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
-import { describe, it, expect, vi } from 'vitest';
-import { readFileSync, mkdtempSync, existsSync, readFileSync as rf } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { runComponent } from '../src/commands/component.js';
+import { describe, it, expect, vi } from "vitest";
+import {
+  readFileSync,
+  mkdtempSync,
+  existsSync,
+  readFileSync as rf,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { runComponent } from "../src/commands/component.js";
 
 const rendered = JSON.parse(
-  readFileSync(fileURLToPath(new URL('../../core/test/fixtures/about-us-layout.json', import.meta.url)), 'utf8'),
+  readFileSync(
+    fileURLToPath(
+      new URL("../../core/test/fixtures/about-us-layout.json", import.meta.url),
+    ),
+    "utf8",
+  ),
 );
 
 function makeConfig(componentPath: string) {
   return {
-    edge: { endpoint: 'https://e', apiKey: 'k', site: 's', defaultLanguage: 'en' },
-    componentPath, componentPropsImport: '@/lib/component-props',
-    sitecorePackage: '@sitecore-content-sdk/nextjs', useDatasourceCheck: true, generateMocks: true, fieldTypeOverrides: {},
+    edge: {
+      endpoint: "https://e",
+      apiKey: "k",
+      site: "s",
+      defaultLanguage: "en",
+    },
+    componentPath,
+    componentPropsImport: "lib/component-props",
+    sitecorePackage: "@sitecore-content-sdk/nextjs",
+    useDatasourceCheck: true,
+    generateMocks: true,
+    fieldTypeOverrides: {},
   };
 }
 
-describe('runComponent', () => {
-  it('writes three files for a found rendering', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'scaffold-cmp-'));
-    const config = makeConfig(join(dir, 'components'));
+describe("runComponent", () => {
+  it("writes three files for a found rendering", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "scaffold-cmp-"));
+    const config = makeConfig(join(dir, "components"));
     const result = await runComponent(
-      { name: 'Hero', route: '/about-us', lang: undefined, dryRun: false, force: false },
-      { loadConfig: vi.fn().mockResolvedValue(config), getLayout: vi.fn().mockResolvedValue(rendered) },
+      {
+        name: "Hero",
+        route: "/about-us",
+        lang: undefined,
+        dryRun: false,
+        force: false,
+      },
+      {
+        loadConfig: vi.fn().mockResolvedValue(config),
+        getLayout: vi.fn().mockResolvedValue(rendered),
+      },
     );
     expect(result.written.length).toBe(3);
-    expect(existsSync(join(dir, 'components', 'Hero.tsx'))).toBe(true);
-    expect(rf(join(dir, 'components', 'Hero.types.ts'), 'utf8')).toContain('HeroProps');
+    expect(existsSync(join(dir, "components", "Hero.tsx"))).toBe(true);
+    expect(rf(join(dir, "components", "Hero.types.ts"), "utf8")).toContain(
+      "HeroProps",
+    );
   });
 
-  it('errors listing available names when rendering not found', async () => {
-    const config = makeConfig('/tmp/never');
+  it("errors listing available names when rendering not found", async () => {
+    const config = makeConfig("/tmp/never");
     await expect(
       runComponent(
-        { name: 'Nope', route: '/about-us', lang: undefined, dryRun: false, force: false },
-        { loadConfig: vi.fn().mockResolvedValue(config), getLayout: vi.fn().mockResolvedValue(rendered) },
+        {
+          name: "Nope",
+          route: "/about-us",
+          lang: undefined,
+          dryRun: false,
+          force: false,
+        },
+        {
+          loadConfig: vi.fn().mockResolvedValue(config),
+          getLayout: vi.fn().mockResolvedValue(rendered),
+        },
       ),
     ).rejects.toThrow(/Hero, PromoCards/);
   });
 
-  it('dry-run returns files without writing', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'scaffold-dry-'));
-    const config = makeConfig(join(dir, 'components'));
+  it("dry-run returns files without writing", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "scaffold-dry-"));
+    const config = makeConfig(join(dir, "components"));
     const result = await runComponent(
-      { name: 'Hero', route: '/about-us', lang: undefined, dryRun: true, force: false },
-      { loadConfig: vi.fn().mockResolvedValue(config), getLayout: vi.fn().mockResolvedValue(rendered) },
+      {
+        name: "Hero",
+        route: "/about-us",
+        lang: undefined,
+        dryRun: true,
+        force: false,
+      },
+      {
+        loadConfig: vi.fn().mockResolvedValue(config),
+        getLayout: vi.fn().mockResolvedValue(rendered),
+      },
     );
     expect(result.written.length).toBe(0);
     expect(result.preview.length).toBe(3);
-    expect(existsSync(join(dir, 'components', 'Hero.tsx'))).toBe(false);
+    expect(existsSync(join(dir, "components", "Hero.tsx"))).toBe(false);
   });
 
-  it('refuses to overwrite without force', async () => {
-    const dir = mkdtempSync(join(tmpdir(), 'scaffold-force-'));
-    const config = makeConfig(join(dir, 'components'));
-    const deps = { loadConfig: vi.fn().mockResolvedValue(config), getLayout: vi.fn().mockResolvedValue(rendered) };
-    const input = { name: 'Hero', route: '/about-us', lang: undefined, dryRun: false, force: false };
+  it("refuses to overwrite without force", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "scaffold-force-"));
+    const config = makeConfig(join(dir, "components"));
+    const deps = {
+      loadConfig: vi.fn().mockResolvedValue(config),
+      getLayout: vi.fn().mockResolvedValue(rendered),
+    };
+    const input = {
+      name: "Hero",
+      route: "/about-us",
+      lang: undefined,
+      dryRun: false,
+      force: false,
+    };
     await runComponent(input, deps);
     await expect(runComponent(input, deps)).rejects.toThrow(/--force/);
   });
@@ -1687,8 +2047,8 @@ Expected: FAIL — cannot find module.
 - [ ] **Step 3: Write `component.ts`**
 
 ```ts
-import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { mkdirSync, writeFileSync, existsSync } from "node:fs";
+import { dirname } from "node:path";
 import {
   loadConfig as defaultLoadConfig,
   EdgeClient,
@@ -1697,8 +2057,8 @@ import {
   generateFiles,
   type RenderingNode,
   type GeneratedFile,
-} from '@sitecore-scaffold/core';
-import type { InspectDeps } from './inspect.js';
+} from "@sitecore-scaffold/core";
+import type { InspectDeps } from "./inspect.js";
 
 export interface ComponentInput {
   name: string | undefined;
@@ -1715,7 +2075,10 @@ export interface ComponentResult {
 
 const CONFIG_PATH = `${process.cwd()}/sitecore-scaffold.config.ts`;
 
-function collectRenderings(placeholders: Record<string, RenderingNode[]>, acc: RenderingNode[]): void {
+function collectRenderings(
+  placeholders: Record<string, RenderingNode[]>,
+  acc: RenderingNode[],
+): void {
   for (const renderings of Object.values(placeholders)) {
     for (const node of renderings) {
       acc.push(node);
@@ -1724,15 +2087,21 @@ function collectRenderings(placeholders: Record<string, RenderingNode[]>, acc: R
   }
 }
 
-export async function runComponent(input: ComponentInput, deps?: Partial<InspectDeps>): Promise<ComponentResult> {
-  if (!input.name) throw new Error('component requires a <Name> argument');
-  if (!input.route) throw new Error('component requires --route <route>');
+export async function runComponent(
+  input: ComponentInput,
+  deps?: Partial<InspectDeps>,
+): Promise<ComponentResult> {
+  if (!input.name) throw new Error("component requires a <Name> argument");
+  if (!input.route) throw new Error("component requires --route <route>");
 
   const loadConfig = deps?.loadConfig ?? defaultLoadConfig;
   const config = await loadConfig(CONFIG_PATH);
   const lang = input.lang ?? config.edge.defaultLanguage;
 
-  const getLayout = deps?.getLayout ?? ((route: string, l: string) => new EdgeClient(config.edge).getLayout(route, l));
+  const getLayout =
+    deps?.getLayout ??
+    ((route: string, l: string) =>
+      new EdgeClient(config.edge).getLayout(route, l));
   const rendered = await getLayout(input.route, lang);
   const tree = parseLayout(rendered, input.route);
 
@@ -1740,8 +2109,10 @@ export async function runComponent(input: ComponentInput, deps?: Partial<Inspect
   collectRenderings(tree.placeholders, all);
   const matches = all.filter((n) => n.componentName === input.name);
   if (matches.length === 0) {
-    const names = [...new Set(all.map((n) => n.componentName))].join(', ');
-    throw new Error(`rendering "${input.name}" not found on ${input.route}. Available: ${names}`);
+    const names = [...new Set(all.map((n) => n.componentName))].join(", ");
+    throw new Error(
+      `rendering "${input.name}" not found on ${input.route}. Available: ${names}`,
+    );
   }
   const node = matches[0];
 
@@ -1759,12 +2130,15 @@ export async function runComponent(input: ComponentInput, deps?: Partial<Inspect
 
   if (!input.force) {
     const clash = files.find((f) => existsSync(f.path));
-    if (clash) throw new Error(`${clash.path} already exists. Use --force to overwrite or --dry-run to preview.`);
+    if (clash)
+      throw new Error(
+        `${clash.path} already exists. Use --force to overwrite or --dry-run to preview.`,
+      );
   }
 
   for (const file of files) {
     mkdirSync(dirname(file.path), { recursive: true });
-    writeFileSync(file.path, file.contents, 'utf8');
+    writeFileSync(file.path, file.contents, "utf8");
   }
   return { written: files, preview: files };
 }
@@ -1787,26 +2161,31 @@ git commit -m "feat(cli): component scaffold command"
 ## Task 16: CLI entry point + wiring
 
 **Files:**
+
 - Create: `packages/cli/src/index.ts`
 
 - [ ] **Step 1: Write `index.ts`**
 
 ```ts
-import { parseArgs } from './args.js';
-import { runInspect } from './commands/inspect.js';
-import { runComponent } from './commands/component.js';
+import { parseArgs } from "./args.js";
+import { runInspect } from "./commands/inspect.js";
+import { runComponent } from "./commands/component.js";
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
 
-  if (args.command === 'inspect') {
+  if (args.command === "inspect") {
     const out = await runInspect({ route: args.route, lang: args.lang });
-    process.stdout.write(out + '\n');
+    process.stdout.write(out + "\n");
     return;
   }
 
   const result = await runComponent({
-    name: args.name, route: args.route, lang: args.lang, dryRun: args.dryRun, force: args.force,
+    name: args.name,
+    route: args.route,
+    lang: args.lang,
+    dryRun: args.dryRun,
+    force: args.force,
   });
 
   if (args.dryRun) {
@@ -1820,7 +2199,9 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  process.stderr.write(`Error: ${err instanceof Error ? err.message : String(err)}\n`);
+  process.stderr.write(
+    `Error: ${err instanceof Error ? err.message : String(err)}\n`,
+  );
   process.exitCode = 1;
 });
 ```
@@ -1847,6 +2228,7 @@ git commit -m "feat(cli): entry point wiring"
 ## Task 17: README + example config + full verification
 
 **Files:**
+
 - Create: `README.md`
 - Create: `sitecore-scaffold.config.example.ts`
 
@@ -1856,14 +2238,14 @@ git commit -m "feat(cli): entry point wiring"
 // Copy to sitecore-scaffold.config.ts and fill in. Secrets come from env vars.
 export default {
   edge: {
-    endpoint: process.env.SITECORE_EDGE_URL!,   // e.g. https://edge.sitecorecloud.io/api/graphql/v1
-    apiKey: process.env.SITECORE_EDGE_TOKEN!,    // never hardcode; read from env only
-    site: 'my-site',
-    defaultLanguage: 'en',
+    endpoint: process.env.SITECORE_EDGE_URL!, // e.g. https://edge.sitecorecloud.io/api/graphql/v1
+    apiKey: process.env.SITECORE_EDGE_TOKEN!, // never hardcode; read from env only
+    site: "my-site",
+    defaultLanguage: "en",
   },
-  componentPath: 'src/components',
-  componentPropsImport: '@/lib/component-props',
-  sitecorePackage: '@sitecore-content-sdk/nextjs',
+  componentPath: "src/components",
+  componentPropsImport: "lib/component-props",
+  sitecorePackage: "@sitecore-content-sdk/nextjs",
   useDatasourceCheck: true,
   generateMocks: true,
   fieldTypeOverrides: {},

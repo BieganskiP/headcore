@@ -1,20 +1,11 @@
 import type { ComponentContract, FieldContract } from '../types.js';
 import { propertyKey } from '../identifiers.js';
+import { collectCardFields, flattenFields } from './fields.js';
 
 const SITECORE_TYPES_ORDER = ['Field', 'ImageField', 'LinkField'] as const;
 
-/** All tsTypes referenced by the component, including inner fields of card items. */
-function allTsTypes(c: ComponentContract): string[] {
-  const types: string[] = [];
-  for (const f of c.fields) {
-    types.push(f.tsType);
-    for (const inner of f.itemFields ?? []) types.push(inner.tsType);
-  }
-  return types;
-}
-
 function collectSitecoreTypeImports(c: ComponentContract): string[] {
-  const tsTypes = allTsTypes(c);
+  const tsTypes = flattenFields(c.fields).map((f) => f.tsType);
   const needed: string[] = [];
   if (tsTypes.some((t) => t.includes('Field<'))) needed.push('Field');
   if (tsTypes.some((t) => t === 'ImageField')) needed.push('ImageField');
@@ -51,7 +42,7 @@ export function renderTypesFile(c: ComponentContract, propsImport: string): stri
 
   // Non-item-reference arrays fall back to a generic ItemReference type; emit its
   // definition only when used (the SDK exports no such type).
-  const usesItemReference = c.fields.some((f) => f.tsType.includes('ItemReference'));
+  const usesItemReference = flattenFields(c.fields).some((f) => f.tsType.includes('ItemReference'));
   const itemReferenceDef = usesItemReference
     ? `\ntype ItemReference = {
   id: string;
@@ -62,8 +53,8 @@ export function renderTypesFile(c: ComponentContract, propsImport: string): stri
 };\n`
     : '';
 
-  // Typed item interfaces for each 'Cards' field.
-  const cardFields = c.fields.filter((f) => f.renderer === 'Cards');
+  // Typed item interfaces for every 'Cards' field, including nested ones.
+  const cardFields = collectCardFields(c.fields);
   const itemTypeDefs = cardFields.map((f) => `\n${renderItemType(f)}\n`).join('');
 
   // Item types are referenced by the generated component, so export them too.
