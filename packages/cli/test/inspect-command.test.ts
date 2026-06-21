@@ -10,7 +10,7 @@ const rendered = JSON.parse(
 const config = {
   edge: { endpoint: 'https://e', apiKey: 'k', site: 's', defaultLanguage: 'en' },
   componentPath: 'src/components', componentPropsImport: 'lib/component-props',
-  sitecorePackage: '@sitecore-content-sdk/nextjs', useDatasourceCheck: true, generateMocks: true, fieldTypeOverrides: {},
+  sitecorePackage: '@sitecore-content-sdk/nextjs', useDatasourceCheck: true, generateMocks: true, styling: 'none', fieldTypeOverrides: {},
 };
 
 describe('runInspect', () => {

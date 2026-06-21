@@ -20,6 +20,7 @@ describe('renderComponentFile', () => {
       propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: true,
+      styling: 'none',
     });
     expect(out).toContain('Text');
     expect(out).toContain('RichText');
@@ -36,6 +37,7 @@ describe('renderComponentFile', () => {
       propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
+      styling: 'none',
     });
     expect(out).toContain('export default Hero;');
     expect(out).not.toContain('withDatasourceCheck');
@@ -46,6 +48,7 @@ describe('renderComponentFile', () => {
       propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
+      styling: 'none',
     });
     expect(out).toContain('data-variant={params?.variant}');
   });
@@ -59,6 +62,7 @@ describe('renderComponentFile', () => {
       propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
+      styling: 'none',
     });
     expect(out).toContain('data-background-color={params?.backgroundColor}');
   });
@@ -72,6 +76,7 @@ describe('renderComponentFile', () => {
       propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
+      styling: 'none',
     });
     expect(out).toContain('data-dynamic-placeholder-id={params?.DynamicPlaceholderId}');
     expect(out).not.toContain('data--');
@@ -86,6 +91,7 @@ describe('renderComponentFile', () => {
       propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
+      styling: 'none',
     });
     expect(out).toContain('<section>');
     expect(out).not.toContain('data-');
@@ -115,6 +121,7 @@ describe('renderComponentFile', () => {
       propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
+      styling: 'none',
     });
     expect(out).toContain("import { TabsProps, TabsItem } from './Tabs.types';");
     expect(out).toContain('{fields.Tabs?.map((item: TabsItem) => (');
@@ -152,6 +159,7 @@ describe('renderComponentFile', () => {
       propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
+      styling: 'none',
     });
     expect(out).toContain("import { ColumnSliderProps, TabsItem, ColumnSliderItemsItem } from './ColumnSlider.types';");
     expect(out).toContain('{fields.Tabs?.map((item: TabsItem) => (');
@@ -172,6 +180,7 @@ describe('renderComponentFile', () => {
       propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
+      styling: 'none',
     });
     expect(out).toContain("<SitecoreLink field={fields['Button Link']} />");
     expect(out).toContain("data-some-param={params?.['Some Param']}");
@@ -191,9 +200,51 @@ describe('renderComponentFile', () => {
       propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
+      styling: 'none',
     });
     expect(out).toContain('const Bare = ({ fields }: BareProps) => {');
     expect(out).not.toContain('params');
+  });
+
+  it('renders placeholders with the Placeholder component and rendering prop', () => {
+    const withPlaceholders: ComponentContract = {
+      name: 'Container',
+      fields: [],
+      params: [],
+      placeholders: ['container-1', 'container-2'],
+    };
+    const out = renderComponentFile(withPlaceholders, {
+      propsImport: 'lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+      styling: 'none',
+    });
+    expect(out).toContain('Placeholder');
+    expect(out).toContain('const Container = ({ fields, rendering }: ContainerProps) => {');
+    expect(out).toContain('<Placeholder name="container-1" rendering={rendering} />');
+    expect(out).toContain('<Placeholder name="container-2" rendering={rendering} />');
+  });
+
+  it('applies CSS module classes and import when styling is css', () => {
+    const out = renderComponentFile(contract, {
+      propsImport: 'lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+      styling: 'css',
+    });
+    expect(out).toContain("import styles from './Hero.module.css';");
+    expect(out).toContain('<section className={styles.root}');
+  });
+
+  it('applies tailwind utility classes when styling is tailwind', () => {
+    const out = renderComponentFile(contract, {
+      propsImport: 'lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+      styling: 'tailwind',
+    });
+    expect(out).toContain('<section className="flex flex-col gap-4"');
+    expect(out).not.toContain('.module.css');
   });
 
   it('omits sitecore content sdk import when no renderers and no datasource check', () => {
@@ -209,6 +260,7 @@ describe('renderComponentFile', () => {
       propsImport: 'lib/component-props',
       sitecorePackage: '@sitecore-content-sdk/nextjs',
       useDatasourceCheck: false,
+      styling: 'none',
     });
     expect(out).not.toContain("from '@sitecore-content-sdk/nextjs'");
     expect(out).toContain("import { SimpleBoxProps } from './SimpleBox.types';");

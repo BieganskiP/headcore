@@ -5,6 +5,8 @@ export interface EdgeConfig {
   defaultLanguage: string;
 }
 
+export type StylingMode = 'css' | 'tailwind' | 'none';
+
 export interface ScaffoldConfig {
   edge: EdgeConfig;
   componentPath: string;
@@ -12,6 +14,8 @@ export interface ScaffoldConfig {
   sitecorePackage: string;
   useDatasourceCheck: boolean;
   generateMocks: boolean;
+  /** Styling strategy for generated components. Defaults to 'css' (CSS Modules). */
+  styling: StylingMode;
   fieldTypeOverrides: Record<string, string>;
 }
 

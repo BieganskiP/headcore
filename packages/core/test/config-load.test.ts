@@ -32,6 +32,17 @@ describe('loadConfig', () => {
     expect(cfg.edge.endpoint).toBe('https://edge.example/api/graphql/v1');
     expect(cfg.edge.apiKey).toBe('secret-token');
     expect(cfg.componentPath).toBe('src/components');
+    expect(cfg.styling).toBe('css'); // default when not specified
+  });
+
+  it('throws when styling is not a recognized value', async () => {
+    const p = writeConfig(dir, `export default {
+      edge: { endpoint: process.env.SITECORE_EDGE_URL, apiKey: process.env.SITECORE_EDGE_TOKEN, site: 's', defaultLanguage: 'en' },
+      componentPath: 'src/components', componentPropsImport: 'lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs', useDatasourceCheck: true, generateMocks: true,
+      styling: 'scss', fieldTypeOverrides: {},
+    };`);
+    await expect(loadConfig(p)).rejects.toThrow(/styling/i);
   });
 
   it('throws a clear error when edge.endpoint is missing', async () => {

@@ -34,6 +34,12 @@ export async function loadConfig(path: string): Promise<ScaffoldConfig> {
     assert(loaded[field], `Config is missing "${field}"`);
   }
 
+  const styling = loaded.styling ?? 'css';
+  assert(
+    styling === 'css' || styling === 'tailwind' || styling === 'none',
+    `Config "styling" must be 'css', 'tailwind', or 'none' (got "${styling}")`,
+  );
+
   return {
     edge: loaded.edge,
     componentPath: loaded.componentPath!,
@@ -41,6 +47,7 @@ export async function loadConfig(path: string): Promise<ScaffoldConfig> {
     sitecorePackage: loaded.sitecorePackage!,
     useDatasourceCheck: loaded.useDatasourceCheck ?? true,
     generateMocks: loaded.generateMocks ?? true,
+    styling,
     fieldTypeOverrides: loaded.fieldTypeOverrides ?? {},
   } as ScaffoldConfig;
 }

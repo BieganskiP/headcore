@@ -2,6 +2,7 @@ import type { ComponentContract, GeneratedFile, RenderingNode, ScaffoldConfig } 
 import { renderTypesFile } from './types-file.js';
 import { renderComponentFile } from './component-file.js';
 import { renderMockFile } from './mock-file.js';
+import { createStyleHelper } from './styling.js';
 
 type CodegenConfig = Omit<ScaffoldConfig, 'edge'>;
 
@@ -19,11 +20,16 @@ export function generateFiles(
         propsImport: config.componentPropsImport,
         sitecorePackage: config.sitecorePackage,
         useDatasourceCheck: config.useDatasourceCheck,
+        styling: config.styling,
       }),
     },
   ];
   if (config.generateMocks) {
     files.push({ path: `${base}.mock.json`, contents: renderMockFile(node) });
+  }
+  const style = createStyleHelper(contract.name, config.styling);
+  if (style.cssFile) {
+    files.push({ path: `${base}.module.css`, contents: style.cssFile });
   }
   return files;
 }

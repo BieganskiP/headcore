@@ -69,6 +69,7 @@ export async function runComponent(input: ComponentInput, deps?: Partial<Inspect
     sitecorePackage: config.sitecorePackage,
     useDatasourceCheck: config.useDatasourceCheck,
     generateMocks: config.generateMocks,
+    styling: config.styling,
     fieldTypeOverrides: config.fieldTypeOverrides,
   });
 

@@ -11,5 +11,6 @@ export default {
   sitecorePackage: '@sitecore-content-sdk/nextjs',
   useDatasourceCheck: true,
   generateMocks: true,
+  styling: 'css', // 'css' (CSS Modules) | 'tailwind' | 'none'
   fieldTypeOverrides: {},
 };
