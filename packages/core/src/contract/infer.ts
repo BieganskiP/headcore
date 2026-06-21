@@ -7,6 +7,22 @@ function unwrap(raw: RawFieldValue): unknown {
   return raw;
 }
 
+function pascalCase(name: string): string {
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+/** An item-reference element: a referenced item carrying its own `fields` bag. */
+function isItemReference(v: unknown): v is { fields: Record<string, unknown> } {
+  return (
+    !!v &&
+    typeof v === 'object' &&
+    !Array.isArray(v) &&
+    'fields' in (v as Record<string, unknown>) &&
+    typeof (v as Record<string, unknown>).fields === 'object' &&
+    (v as Record<string, unknown>).fields !== null
+  );
+}
+
 export function inferField(
   name: string,
   raw: RawFieldValue,
@@ -34,6 +50,20 @@ export function inferField(
     return { name, tsType: 'Field<number>', optional: false, renderer: 'raw', sitecoreImport: null };
   }
   if (Array.isArray(value)) {
+    const first = value[0];
+    if (isItemReference(first)) {
+      const itemTypeName = `${pascalCase(name)}Item`;
+      const itemFields = Object.entries(first.fields).map(([k, v]) => inferField(k, v, overrides));
+      return {
+        name,
+        tsType: `${itemTypeName}[]`,
+        optional: false,
+        renderer: 'Cards',
+        sitecoreImport: null,
+        itemTypeName,
+        itemFields,
+      };
+    }
     return { name, tsType: 'ItemReference[]', optional: false, renderer: 'raw', sitecoreImport: null };
   }
   if (typeof value === 'object') {

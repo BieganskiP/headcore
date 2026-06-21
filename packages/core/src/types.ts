@@ -31,7 +31,7 @@ export interface RenderingTree {
   placeholders: Record<string, RenderingNode[]>;
 }
 
-export type FieldRenderer = 'Text' | 'RichText' | 'Image' | 'Link' | 'raw';
+export type FieldRenderer = 'Text' | 'RichText' | 'Image' | 'Link' | 'Cards' | 'raw';
 
 export interface FieldContract {
   name: string;
@@ -39,6 +39,10 @@ export interface FieldContract {
   optional: boolean;
   renderer: FieldRenderer;
   sitecoreImport: string | null;
+  /** For 'Cards' fields: the generated item interface name, e.g. 'TabsItem'. */
+  itemTypeName?: string;
+  /** For 'Cards' fields: contracts for each inner field of a referenced item. */
+  itemFields?: FieldContract[];
 }
 
 export interface ComponentContract {

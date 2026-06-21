@@ -58,4 +58,36 @@ describe('renderTypesFile', () => {
     // The SDK does not export ItemReference, so it must not be imported.
     expect(out).not.toContain("import { ItemReference }");
   });
+
+  it('emits a typed item interface for a Cards field with inner fields under fields', () => {
+    const cardsContract: ComponentContract = {
+      name: 'Tabs',
+      fields: [
+        {
+          name: 'Tabs',
+          tsType: 'TabsItem[]',
+          optional: false,
+          renderer: 'Cards',
+          sitecoreImport: null,
+          itemTypeName: 'TabsItem',
+          itemFields: [
+            { name: 'Name', tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' },
+            { name: 'Icon', tsType: 'ImageField', optional: true, renderer: 'Image', sitecoreImport: 'Image' },
+          ],
+        },
+      ],
+      params: [],
+      placeholders: [],
+    };
+    const out = renderTypesFile(cardsContract, '@/lib/component-props');
+    expect(out).toContain('type TabsItem = {');
+    expect(out).toContain('  fields: {');
+    expect(out).toContain('    Name: Field<string>;');
+    expect(out).toContain('    Icon?: ImageField;');
+    expect(out).toContain('Tabs: TabsItem[];');
+    // Inner field types must drive the SDK import even though the outer field is a card array.
+    expect(out).toContain("import { Field, ImageField } from '@sitecore-content-sdk/nextjs';");
+    // The item type must be exported so the component can import it.
+    expect(out).toContain('export type { TabsFields, TabsParams, TabsProps, TabsItem };');
+  });
 });

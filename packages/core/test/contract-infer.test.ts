@@ -22,8 +22,21 @@ describe('inferField', () => {
     expect(inferField('n', { value: 3 }, {}).tsType).toBe('Field<number>');
   });
 
-  it('infers array as ItemReference[]', () => {
+  it('infers a plain array (no inner fields) as ItemReference[] raw', () => {
     expect(inferField('cards', { value: [{ id: '1' }] }, {}).tsType).toBe('ItemReference[]');
+  });
+
+  it('infers an array of item references as typed Cards', () => {
+    const r = inferField('Tabs', [{ id: '1', fields: { Name: { value: 'Services' }, Icon: { value: '' } } }], {});
+    expect(r).toMatchObject({
+      name: 'Tabs',
+      tsType: 'TabsItem[]',
+      renderer: 'Cards',
+      itemTypeName: 'TabsItem',
+    });
+    expect(r.itemFields?.map((f) => f.name)).toEqual(['Name', 'Icon']);
+    expect(r.itemFields?.[0]).toMatchObject({ renderer: 'Text', tsType: 'Field<string>' });
+    expect(r.itemFields?.[1].optional).toBe(true); // empty Icon value
   });
 
   it('marks null/absent value optional with TODO renderer raw', () => {

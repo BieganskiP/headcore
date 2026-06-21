@@ -91,6 +91,41 @@ describe('renderComponentFile', () => {
     expect(out).not.toContain('data-');
   });
 
+  it('renders a typed card map for a Cards field, pulling inner-field renderers into imports', () => {
+    const cardsContract: ComponentContract = {
+      name: 'Tabs',
+      fields: [
+        {
+          name: 'Tabs',
+          tsType: 'TabsItem[]',
+          optional: false,
+          renderer: 'Cards',
+          sitecoreImport: null,
+          itemTypeName: 'TabsItem',
+          itemFields: [
+            { name: 'Name', tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' },
+            { name: 'Icon', tsType: 'ImageField', optional: true, renderer: 'Image', sitecoreImport: 'Image' },
+          ],
+        },
+      ],
+      params: [],
+      placeholders: [],
+    };
+    const out = renderComponentFile(cardsContract, {
+      propsImport: '@/lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+    });
+    expect(out).toContain("import { TabsProps, TabsItem } from './Tabs.types';");
+    expect(out).toContain('{fields.Tabs?.map((item: TabsItem) => (');
+    expect(out).toContain('<article className="card" key={item.id}>');
+    expect(out).toContain('<Text tag="span" field={item.fields.Name} />');
+    expect(out).toContain('{item.fields.Icon && <SitecoreImage field={item.fields.Icon} />}');
+    // inner-field renderers must be imported even though the card field itself has no import
+    expect(out).toContain('Text');
+    expect(out).toContain('Image as SitecoreImage');
+  });
+
   it('omits sitecore content sdk import when no renderers and no datasource check', () => {
     const rawOnlyContract: ComponentContract = {
       name: 'SimpleBox',

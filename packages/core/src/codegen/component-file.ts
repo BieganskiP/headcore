@@ -15,25 +15,46 @@ function camelToKebab(name: string): string {
   return name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-function rendererJsx(f: FieldContract, first: boolean): string {
-  const guard = (jsx: string) => (f.optional ? `      {fields.${f.name} && ${jsx}}` : `      ${jsx}`);
+/** The JSX element for a single field, given the expression that accesses it. */
+function fieldElement(f: FieldContract, accessor: string, firstText: boolean): string {
   switch (f.renderer) {
     case 'Text':
-      return guard(`<Text tag="${first ? 'h1' : 'span'}" field={fields.${f.name}} />`);
+      return `<Text tag="${firstText ? 'h1' : 'span'}" field={${accessor}} />`;
     case 'RichText':
-      return guard(`<RichText field={fields.${f.name}} />`);
+      return `<RichText field={${accessor}} />`;
     case 'Image':
-      return guard(`<SitecoreImage field={fields.${f.name}} />`);
+      return `<SitecoreImage field={${accessor}} />`;
     case 'Link':
-      return guard(`<SitecoreLink field={fields.${f.name}} />`);
+      return `<SitecoreLink field={${accessor}} />`;
     default:
-      return `      {/* TODO: render field "${f.name}" (${f.tsType}) */}`;
+      return '';
   }
+}
+
+/** Renders a `.map()` of basic cards for a 'Cards' field, rendering each inner field. */
+function renderCards(f: FieldContract, indent: string): string {
+  const inner = (f.itemFields ?? [])
+    .map((inf) => {
+      const accessor = `item.fields.${inf.name}`;
+      const el = fieldElement(inf, accessor, false);
+      if (!el) return `${indent}      {/* TODO: render "${inf.name}" (${inf.tsType}) */}`;
+      return inf.optional ? `${indent}      {${accessor} && ${el}}` : `${indent}      ${el}`;
+    })
+    .join('\n');
+
+  return `${indent}{fields.${f.name}?.map((item: ${f.itemTypeName}) => (
+${indent}  <article className="card" key={item.id}>
+${inner}
+${indent}  </article>
+${indent}))}`;
 }
 
 export function renderComponentFile(c: ComponentContract, opts: ComponentOptions): string {
   const renderers = new Set<string>();
-  for (const f of c.fields) if (f.sitecoreImport) renderers.add(f.sitecoreImport);
+  for (const f of c.fields) {
+    if (f.sitecoreImport) renderers.add(f.sitecoreImport);
+    for (const inf of f.itemFields ?? []) if (inf.sitecoreImport) renderers.add(inf.sitecoreImport);
+  }
   const importNames = [...renderers].map((r) => IMPORT_ALIAS[r] ?? r);
   if (opts.useDatasourceCheck) importNames.push('withDatasourceCheck');
 
@@ -41,14 +62,21 @@ export function renderComponentFile(c: ComponentContract, opts: ComponentOptions
     ? `import {\n${importNames.map((n) => `  ${n},`).join('\n')}\n} from '${opts.sitecorePackage}';\n\n`
     : '';
 
-  const imports = `${sdkImportLine}import { ${c.name}Props } from './${c.name}.types';`;
+  const itemTypeNames = c.fields
+    .filter((f) => f.renderer === 'Cards')
+    .map((f) => f.itemTypeName as string);
+  const typeImports = [`${c.name}Props`, ...itemTypeNames];
+  const imports = `${sdkImportLine}import { ${typeImports.join(', ')} } from './${c.name}.types';`;
 
   let firstText = true;
   const body = c.fields
     .map((f) => {
+      if (f.renderer === 'Cards') return renderCards(f, '      ');
       const isFirst = f.renderer === 'Text' && firstText;
       if (isFirst) firstText = false;
-      return rendererJsx(f, isFirst);
+      const el = fieldElement(f, `fields.${f.name}`, isFirst);
+      if (!el) return `      {/* TODO: render field "${f.name}" (${f.tsType}) */}`;
+      return f.optional ? `      {fields.${f.name} && ${el}}` : `      ${el}`;
     })
     .join('\n');
 
