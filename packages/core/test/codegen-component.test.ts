@@ -63,6 +63,20 @@ describe('renderComponentFile', () => {
     expect(out).toContain('data-background-color={params?.backgroundColor}');
   });
 
+  it('kebab-cases a param starting with a capital without a leading dash', () => {
+    const sxaContract: ComponentContract = {
+      ...contract,
+      params: ['DynamicPlaceholderId'],
+    };
+    const out = renderComponentFile(sxaContract, {
+      propsImport: '@/lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+    });
+    expect(out).toContain('data-dynamic-placeholder-id={params?.DynamicPlaceholderId}');
+    expect(out).not.toContain('data--');
+  });
+
   it('emits plain <section> with no data attributes when params is empty', () => {
     const noParamsContract: ComponentContract = {
       ...contract,

@@ -12,7 +12,7 @@ const IMPORT_ALIAS: Record<string, string> = {
 };
 
 function camelToKebab(name: string): string {
-  return name.replace(/([A-Z])/g, (m) => `-${m.toLowerCase()}`);
+  return name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
 function rendererJsx(f: FieldContract, first: boolean): string {

@@ -23,7 +23,21 @@ export function renderTypesFile(c: ComponentContract, propsImport: string): stri
     ? `import { ${sitecoreTypes.join(', ')} } from '@sitecore-content-sdk/nextjs';\n`
     : '';
 
+  // Multilist/reference fields come back as arrays of item references. The SDK has no
+  // exported type for these, so emit a local definition matching the layout JSON shape.
+  const usesItemReference = c.fields.some((f) => f.tsType.includes('ItemReference'));
+  const itemReferenceDef = usesItemReference
+    ? `\ntype ItemReference = {
+  id: string;
+  url: string;
+  name: string;
+  displayName: string;
+  fields: Record<string, unknown>;
+};\n`
+    : '';
+
   return `${sdkImportLine}import { ComponentProps } from '${propsImport}';
+${itemReferenceDef}
 
 type ${c.name}Fields = {
 ${fieldLines}

@@ -42,4 +42,20 @@ describe('renderTypesFile', () => {
     const out = renderTypesFile(rawContract, '@/lib/component-props');
     expect(out).not.toContain("from '@sitecore-content-sdk/nextjs'");
   });
+
+  it('emits a local ItemReference type definition when a field uses ItemReference[]', () => {
+    const refContract: ComponentContract = {
+      name: 'Tabs',
+      fields: [
+        { name: 'Tabs', tsType: 'ItemReference[]', optional: false, renderer: 'raw', sitecoreImport: null },
+      ],
+      params: [],
+      placeholders: [],
+    };
+    const out = renderTypesFile(refContract, '@/lib/component-props');
+    expect(out).toContain('type ItemReference = {');
+    expect(out).toContain('Tabs: ItemReference[];');
+    // The SDK does not export ItemReference, so it must not be imported.
+    expect(out).not.toContain("import { ItemReference }");
+  });
 });
