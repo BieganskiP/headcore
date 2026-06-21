@@ -39,6 +39,12 @@ describe('inferField', () => {
     expect(r.itemFields?.[1].optional).toBe(true); // empty Icon value
   });
 
+  it('sanitizes a spaced field name into a valid item type name', () => {
+    const r = inferField('Column Slider Items', [{ id: '1', fields: { Name: { value: 'x' } } }], {});
+    expect(r.itemTypeName).toBe('ColumnSliderItemsItem');
+    expect(r.tsType).toBe('ColumnSliderItemsItem[]');
+  });
+
   it('marks null/absent value optional with TODO renderer raw', () => {
     const r = inferField('maybe', { value: null }, {});
     expect(r.optional).toBe(true);

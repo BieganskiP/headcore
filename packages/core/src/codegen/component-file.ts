@@ -1,4 +1,5 @@
 import type { ComponentContract, FieldContract } from '../types.js';
+import { accessExpr, optionalAccess, toKebabAttr } from '../identifiers.js';
 
 interface ComponentOptions {
   propsImport: string;
@@ -10,10 +11,6 @@ const IMPORT_ALIAS: Record<string, string> = {
   Image: 'Image as SitecoreImage',
   Link: 'Link as SitecoreLink',
 };
-
-function camelToKebab(name: string): string {
-  return name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-}
 
 /** The JSX element for a single field, given the expression that accesses it. */
 function fieldElement(f: FieldContract, accessor: string, firstText: boolean): string {
@@ -35,14 +32,14 @@ function fieldElement(f: FieldContract, accessor: string, firstText: boolean): s
 function renderCards(f: FieldContract, indent: string): string {
   const inner = (f.itemFields ?? [])
     .map((inf) => {
-      const accessor = `item.fields.${inf.name}`;
+      const accessor = accessExpr('item.fields', inf.name);
       const el = fieldElement(inf, accessor, false);
       if (!el) return `${indent}      {/* TODO: render "${inf.name}" (${inf.tsType}) */}`;
       return inf.optional ? `${indent}      {${accessor} && ${el}}` : `${indent}      ${el}`;
     })
     .join('\n');
 
-  return `${indent}{fields.${f.name}?.map((item: ${f.itemTypeName}) => (
+  return `${indent}{${accessExpr('fields', f.name)}?.map((item: ${f.itemTypeName}) => (
 ${indent}  <article className="card" key={item.id}>
 ${inner}
 ${indent}  </article>
@@ -72,19 +69,22 @@ export function renderComponentFile(c: ComponentContract, opts: ComponentOptions
   const body = c.fields
     .map((f) => {
       if (f.renderer === 'Cards') return renderCards(f, '      ');
+      const accessor = accessExpr('fields', f.name);
       const isFirst = f.renderer === 'Text' && firstText;
       if (isFirst) firstText = false;
-      const el = fieldElement(f, `fields.${f.name}`, isFirst);
+      const el = fieldElement(f, accessor, isFirst);
       if (!el) return `      {/* TODO: render field "${f.name}" (${f.tsType}) */}`;
-      return f.optional ? `      {fields.${f.name} && ${el}}` : `      ${el}`;
+      return f.optional ? `      {${accessor} && ${el}}` : `      ${el}`;
     })
     .join('\n');
 
-  const sectionAttrs = c.params.length > 0
-    ? ' ' + c.params.map((p) => `data-${camelToKebab(p)}={params?.${p}}`).join(' ')
+  const hasParams = c.params.length > 0;
+  const sectionAttrs = hasParams
+    ? ' ' + c.params.map((p) => `data-${toKebabAttr(p)}={${optionalAccess('params', p)}}`).join(' ')
     : '';
+  const propsArg = hasParams ? '{ fields, params }' : '{ fields }';
 
-  const component = `const ${c.name} = ({ fields, params }: ${c.name}Props) => {
+  const component = `const ${c.name} = (${propsArg}: ${c.name}Props) => {
   return (
     <section${sectionAttrs}>
 ${body}

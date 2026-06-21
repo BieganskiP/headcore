@@ -126,6 +126,43 @@ describe('renderComponentFile', () => {
     expect(out).toContain('Image as SitecoreImage');
   });
 
+  it('uses bracket access for field and param names with spaces', () => {
+    const spacedContract: ComponentContract = {
+      name: 'Promo',
+      fields: [
+        { name: 'Button Link', tsType: 'LinkField', optional: false, renderer: 'Link', sitecoreImport: 'Link' },
+      ],
+      params: ['Some Param'],
+      placeholders: [],
+    };
+    const out = renderComponentFile(spacedContract, {
+      propsImport: '@/lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+    });
+    expect(out).toContain("<SitecoreLink field={fields['Button Link']} />");
+    expect(out).toContain("data-some-param={params?.['Some Param']}");
+    expect(out).not.toContain('fields.Button Link');
+  });
+
+  it('omits the params destructure when there are no params', () => {
+    const noParams: ComponentContract = {
+      name: 'Bare',
+      fields: [
+        { name: 'heading', tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' },
+      ],
+      params: [],
+      placeholders: [],
+    };
+    const out = renderComponentFile(noParams, {
+      propsImport: '@/lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+    });
+    expect(out).toContain('const Bare = ({ fields }: BareProps) => {');
+    expect(out).not.toContain('params');
+  });
+
   it('omits sitecore content sdk import when no renderers and no datasource check', () => {
     const rawOnlyContract: ComponentContract = {
       name: 'SimpleBox',

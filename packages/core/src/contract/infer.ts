@@ -1,14 +1,11 @@
 import type { FieldContract, RawFieldValue } from '../types.js';
+import { toTypeName } from '../identifiers.js';
 
 function unwrap(raw: RawFieldValue): unknown {
   if (raw && typeof raw === 'object' && 'value' in (raw as Record<string, unknown>)) {
     return (raw as Record<string, unknown>).value;
   }
   return raw;
-}
-
-function pascalCase(name: string): string {
-  return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 /** An item-reference element: a referenced item carrying its own `fields` bag. */
@@ -52,7 +49,7 @@ export function inferField(
   if (Array.isArray(value)) {
     const first = value[0];
     if (isItemReference(first)) {
-      const itemTypeName = `${pascalCase(name)}Item`;
+      const itemTypeName = `${toTypeName(name)}Item`;
       const itemFields = Object.entries(first.fields).map(([k, v]) => inferField(k, v, overrides));
       return {
         name,

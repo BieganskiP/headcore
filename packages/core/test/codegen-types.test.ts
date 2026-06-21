@@ -90,4 +90,18 @@ describe('renderTypesFile', () => {
     // The item type must be exported so the component can import it.
     expect(out).toContain('export type { TabsFields, TabsParams, TabsProps, TabsItem };');
   });
+
+  it('quotes field and param keys that are not valid identifiers', () => {
+    const spacedContract: ComponentContract = {
+      name: 'Promo',
+      fields: [
+        { name: 'Button Link', tsType: 'LinkField', optional: true, renderer: 'Link', sitecoreImport: 'Link' },
+      ],
+      params: ['Some Param'],
+      placeholders: [],
+    };
+    const out = renderTypesFile(spacedContract, '@/lib/component-props');
+    expect(out).toContain("'Button Link'?: LinkField;");
+    expect(out).toContain("'Some Param'?: string;");
+  });
 });

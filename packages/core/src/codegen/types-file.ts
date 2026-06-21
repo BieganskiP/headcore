@@ -1,4 +1,5 @@
 import type { ComponentContract, FieldContract } from '../types.js';
+import { propertyKey } from '../identifiers.js';
 
 const SITECORE_TYPES_ORDER = ['Field', 'ImageField', 'LinkField'] as const;
 
@@ -24,7 +25,7 @@ function collectSitecoreTypeImports(c: ComponentContract): string[] {
 /** Renders a typed item interface for a 'Cards' field, e.g. `type TabsItem = {...}`. */
 function renderItemType(f: FieldContract): string {
   const innerLines = (f.itemFields ?? [])
-    .map((inner) => `    ${inner.name}${inner.optional ? '?' : ''}: ${inner.tsType};`)
+    .map((inner) => `    ${propertyKey(inner.name)}${inner.optional ? '?' : ''}: ${inner.tsType};`)
     .join('\n');
   return `type ${f.itemTypeName} = {
   id: string;
@@ -39,9 +40,9 @@ ${innerLines}
 
 export function renderTypesFile(c: ComponentContract, propsImport: string): string {
   const fieldLines = c.fields
-    .map((f) => `  ${f.name}${f.optional ? '?' : ''}: ${f.tsType};`)
+    .map((f) => `  ${propertyKey(f.name)}${f.optional ? '?' : ''}: ${f.tsType};`)
     .join('\n');
-  const paramLines = c.params.map((p) => `  ${p}?: string;`).join('\n');
+  const paramLines = c.params.map((p) => `  ${propertyKey(p)}?: string;`).join('\n');
 
   const sitecoreTypes = collectSitecoreTypeImports(c);
   const sdkImportLine = sitecoreTypes.length > 0
