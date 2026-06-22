@@ -44,7 +44,8 @@ export function inferField(
     return { name, tsType: 'Field<boolean>', optional: false, renderer: 'raw', sitecoreImport: null };
   }
   if (typeof value === 'number') {
-    return { name, tsType: 'Field<number>', optional: false, renderer: 'raw', sitecoreImport: null };
+    // Content SDK's TextField.value is `string | number`, so <Text> renders numbers fine.
+    return { name, tsType: 'Field<number>', optional: false, renderer: 'Text', sitecoreImport: 'Text' };
   }
   if (Array.isArray(value)) {
     const first = value[0];

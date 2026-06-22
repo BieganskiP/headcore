@@ -88,7 +88,7 @@ export function renderComponentFile(c: ComponentContract, opts: ComponentOptions
     .map((f) => {
       if (f.renderer === 'Cards') return renderCards(f, '      ', accessExpr('fields', f.name), 'item', style.card);
       const accessor = accessExpr('fields', f.name);
-      const isFirst = f.renderer === 'Text' && firstText;
+      const isFirst = f.renderer === 'Text' && f.tsType === 'Field<string>' && firstText;
       if (isFirst) firstText = false;
       const el = fieldElement(f, accessor, isFirst);
       if (!el) return `      {/* TODO: render field "${f.name}" (${f.tsType}) */}`;

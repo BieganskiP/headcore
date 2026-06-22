@@ -22,6 +22,14 @@ describe('inferField', () => {
     expect(inferField('n', { value: 3 }, {}).tsType).toBe('Field<number>');
   });
 
+  it('renders a number field with Text (TextField accepts string | number)', () => {
+    expect(inferField('count', { value: 3 }, {})).toMatchObject({
+      tsType: 'Field<number>',
+      renderer: 'Text',
+      sitecoreImport: 'Text',
+    });
+  });
+
   it('infers a plain array (no inner fields) as ItemReference[] raw', () => {
     expect(inferField('cards', { value: [{ id: '1' }] }, {}).tsType).toBe('ItemReference[]');
   });

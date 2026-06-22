@@ -247,6 +247,28 @@ describe('renderComponentFile', () => {
     expect(out).not.toContain('.module.css');
   });
 
+  it('renders a number field with <Text> and does not make it the h1 heading', () => {
+    const numberContract: ComponentContract = {
+      name: 'Stat',
+      fields: [
+        { name: 'count', tsType: 'Field<number>', optional: false, renderer: 'Text', sitecoreImport: 'Text' },
+        { name: 'label', tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' },
+      ],
+      params: [],
+      placeholders: [],
+    };
+    const out = renderComponentFile(numberContract, {
+      propsImport: 'lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+      styling: 'none',
+    });
+    expect(out).toContain('<Text tag="span" field={fields.count} />');
+    // the string field, not the number, becomes the h1
+    expect(out).toContain('<Text tag="h1" field={fields.label} />');
+    expect(out).not.toContain('{/* TODO: render field "count"');
+  });
+
   it('omits sitecore content sdk import when no renderers and no datasource check', () => {
     const rawOnlyContract: ComponentContract = {
       name: 'SimpleBox',
