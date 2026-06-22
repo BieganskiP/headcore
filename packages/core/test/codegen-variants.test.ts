@@ -17,4 +17,8 @@ describe('normalizeVariants', () => {
   it('dedupes after sanitizing', () => {
     expect(normalizeVariants(['With Background', 'with-background'])).toEqual(['Default', 'WithBackground']);
   });
+
+  it("treats a lowercase 'default' as the Default variant and moves it first", () => {
+    expect(normalizeVariants(['default', 'ThreeCard'])).toEqual(['Default', 'ThreeCard']);
+  });
 });
