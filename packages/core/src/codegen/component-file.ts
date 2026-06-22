@@ -8,6 +8,7 @@ interface ComponentOptions {
   sitecorePackage: string;
   useDatasourceCheck: boolean;
   styling: StylingMode;
+  /** Variant export names. MUST be valid PascalCase identifiers (use `normalizeVariants`); used verbatim as `export const <name>`. */
   variants?: string[];
 }
 

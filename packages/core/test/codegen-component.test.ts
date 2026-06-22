@@ -337,4 +337,25 @@ describe('renderComponentFile', () => {
     expect(out).toContain('export default withDatasourceCheck()<GridModuleProps>(GridModule);');
     expect(out).not.toContain('Variant');
   });
+
+  it('passes params through and keeps param data-attrs in variant mode', () => {
+    const variantWithParam: ComponentContract = {
+      name: 'GridParam',
+      fields: [
+        { name: 'Title', tsType: 'Field<string>', optional: false, renderer: 'Text', sitecoreImport: 'Text' },
+      ],
+      params: ['theme'],
+      placeholders: [],
+    };
+    const out = renderComponentFile(variantWithParam, {
+      propsImport: 'lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs',
+      useDatasourceCheck: false,
+      styling: 'none',
+      variants: ['Default', 'ThreeCard'],
+    });
+    // inner component destructures params, and the section keeps both data-variant and the param attr
+    expect(out).toContain('const GridParamVariant = ({ fields, params, variant }: GridParamProps & { variant: string }) => {');
+    expect(out).toContain('<section data-variant={variant} data-theme={params?.theme}>');
+  });
 });
