@@ -5,11 +5,12 @@ export interface ParsedArgs {
   lang: string | undefined;
   dryRun: boolean;
   force: boolean;
+  variants: string[];
 }
 
 const USAGE = `usage:
   sitecore-scaffold inspect <route>
-  sitecore-scaffold component <Name> --route <route> [--lang <lang>] [--dry-run] [--force]`;
+  sitecore-scaffold component <Name> --route <route> [--lang <lang>] [--variants <A,B,C>] [--dry-run] [--force]`;
 
 export function parseArgs(argv: string[]): ParsedArgs {
   if (argv.length === 0) throw new Error(USAGE);
@@ -23,18 +24,20 @@ export function parseArgs(argv: string[]): ParsedArgs {
   let lang: string | undefined;
   let dryRun = false;
   let force = false;
+  let variants: string[] = [];
 
   for (let i = 0; i < rest.length; i++) {
     const arg = rest[i];
     if (arg === '--route') route = rest[++i];
     else if (arg === '--lang') lang = rest[++i];
+    else if (arg === '--variants') variants = (rest[++i] ?? '').split(',').map((s) => s.trim()).filter(Boolean);
     else if (arg === '--dry-run') dryRun = true;
     else if (arg === '--force') force = true;
     else positionals.push(arg);
   }
 
   if (command === 'inspect') {
-    return { command, name: undefined, route: positionals[0], lang, dryRun, force };
+    return { command, name: undefined, route: positionals[0], lang, dryRun, force, variants };
   }
-  return { command, name: positionals[0], route, lang, dryRun, force };
+  return { command, name: positionals[0], route, lang, dryRun, force, variants };
 }
