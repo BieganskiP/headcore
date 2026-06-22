@@ -12,7 +12,7 @@ async function main(): Promise<void> {
   }
 
   const result = await runComponent({
-    name: args.name, route: args.route, lang: args.lang, dryRun: args.dryRun, force: args.force,
+    name: args.name, route: args.route, lang: args.lang, dryRun: args.dryRun, force: args.force, variants: args.variants,
   });
 
   if (args.dryRun) {

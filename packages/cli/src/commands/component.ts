@@ -6,6 +6,7 @@ import {
   parseLayout,
   buildContract,
   generateFiles,
+  normalizeVariants,
   type RenderingNode,
   type GeneratedFile,
 } from '@sitecore-scaffold/core';
@@ -17,6 +18,7 @@ export interface ComponentInput {
   lang: string | undefined;
   dryRun: boolean;
   force: boolean;
+  variants?: string[];
 }
 
 export interface ComponentResult {
@@ -63,16 +65,23 @@ export async function runComponent(input: ComponentInput, deps?: Partial<Inspect
   const node = matches[0];
 
   const contract = buildContract(node, config.fieldTypeOverrides);
-  const files = generateFiles(contract, node, {
-    componentPath: config.componentPath,
-    componentFolder: config.componentFolder,
-    componentPropsImport: config.componentPropsImport,
-    sitecorePackage: config.sitecorePackage,
-    useDatasourceCheck: config.useDatasourceCheck,
-    generateMocks: config.generateMocks,
-    styling: config.styling,
-    fieldTypeOverrides: config.fieldTypeOverrides,
-  });
+  const variants =
+    input.variants && input.variants.length > 0 ? normalizeVariants(input.variants) : undefined;
+  const files = generateFiles(
+    contract,
+    node,
+    {
+      componentPath: config.componentPath,
+      componentFolder: config.componentFolder,
+      componentPropsImport: config.componentPropsImport,
+      sitecorePackage: config.sitecorePackage,
+      useDatasourceCheck: config.useDatasourceCheck,
+      generateMocks: config.generateMocks,
+      styling: config.styling,
+      fieldTypeOverrides: config.fieldTypeOverrides,
+    },
+    variants,
+  );
 
   if (input.dryRun) return { written: [], preview: files };
 

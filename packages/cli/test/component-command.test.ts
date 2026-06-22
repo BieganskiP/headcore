@@ -61,6 +61,20 @@ describe('runComponent', () => {
     await expect(runComponent(input, deps)).rejects.toThrow(/--force/);
   });
 
+  it('generates a variant module with named exports including a prepended Default', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'scaffold-var-'));
+    const config = makeConfig(join(dir, 'components'));
+    const result = await runComponent(
+      { name: 'Hero', route: '/about-us', lang: undefined, dryRun: true, force: false, variants: ['ThreeCard'] },
+      { loadConfig: vi.fn().mockResolvedValue(config), getLayout: vi.fn().mockResolvedValue(rendered) },
+    );
+    const tsx = result.preview.find((f) => f.path.endsWith('Hero.tsx'))!.contents;
+    expect(tsx).toContain('const HeroVariant = (');
+    expect(tsx).toContain('export const Default =');
+    expect(tsx).toContain('export const ThreeCard =');
+    expect(tsx).not.toContain('export default');
+  });
+
   it('errors with ambiguous when multiple renderings share the same componentName', async () => {
     const ambiguousRendered = {
       sitecore: {
