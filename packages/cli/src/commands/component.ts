@@ -4,10 +4,10 @@ import {
   loadConfig as defaultLoadConfig,
   EdgeClient,
   parseLayout,
+  collectRenderings,
   buildContract,
   generateFiles,
   normalizeVariants,
-  type RenderingNode,
   type GeneratedFile,
 } from '@sitecore-scaffold/core';
 import type { InspectDeps } from './inspect.js';
@@ -28,15 +28,6 @@ export interface ComponentResult {
 
 const CONFIG_PATH = `${process.cwd()}/sitecore-scaffold.config.ts`;
 
-function collectRenderings(placeholders: Record<string, RenderingNode[]>, acc: RenderingNode[]): void {
-  for (const renderings of Object.values(placeholders)) {
-    for (const node of renderings) {
-      acc.push(node);
-      collectRenderings(node.placeholders, acc);
-    }
-  }
-}
-
 export async function runComponent(input: ComponentInput, deps?: Partial<InspectDeps>): Promise<ComponentResult> {
   if (!input.name) throw new Error('component requires a <Name> argument');
   if (!input.route) throw new Error('component requires --route <route>');
@@ -49,8 +40,7 @@ export async function runComponent(input: ComponentInput, deps?: Partial<Inspect
   const rendered = await getLayout(input.route, lang);
   const tree = parseLayout(rendered, input.route);
 
-  const all: RenderingNode[] = [];
-  collectRenderings(tree.placeholders, all);
+  const all = collectRenderings(tree);
   const matches = all.filter((n) => n.componentName === input.name);
   if (matches.length === 0) {
     const names = [...new Set(all.map((n) => n.componentName))].join(', ');
