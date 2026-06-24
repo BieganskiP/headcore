@@ -3,6 +3,7 @@ export { loadConfig } from './config/load.js';
 export { EdgeClient } from './edge/client.js';
 export { LAYOUT_QUERY } from './edge/query.js';
 export { parseLayout } from './inspect/parse.js';
+export { collectRenderings } from './inspect/collect.js';
 export { formatTree } from './inspect/render-tree.js';
 export { inferField } from './contract/infer.js';
 export { buildContract } from './contract/build.js';
