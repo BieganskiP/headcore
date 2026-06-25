@@ -4,10 +4,10 @@ import {
   loadConfig as defaultLoadConfig,
   EdgeClient,
   parseLayout,
+  collectRenderings,
   buildContract,
   generateFiles,
   normalizeVariants,
-  type RenderingNode,
   type GeneratedFile,
 } from '@sitecore-scaffold/core';
 import type { InspectDeps } from './inspect.js';
@@ -28,15 +28,6 @@ export interface ComponentResult {
 
 const CONFIG_PATH = `${process.cwd()}/sitecore-scaffold.config.ts`;
 
-function collectRenderings(placeholders: Record<string, RenderingNode[]>, acc: RenderingNode[]): void {
-  for (const renderings of Object.values(placeholders)) {
-    for (const node of renderings) {
-      acc.push(node);
-      collectRenderings(node.placeholders, acc);
-    }
-  }
-}
-
 export async function runComponent(input: ComponentInput, deps?: Partial<InspectDeps>): Promise<ComponentResult> {
   if (!input.name) throw new Error('component requires a <Name> argument');
   if (!input.route) throw new Error('component requires --route <route>');
@@ -49,8 +40,7 @@ export async function runComponent(input: ComponentInput, deps?: Partial<Inspect
   const rendered = await getLayout(input.route, lang);
   const tree = parseLayout(rendered, input.route);
 
-  const all: RenderingNode[] = [];
-  collectRenderings(tree.placeholders, all);
+  const all = collectRenderings(tree);
   const matches = all.filter((n) => n.componentName === input.name);
   if (matches.length === 0) {
     const names = [...new Set(all.map((n) => n.componentName))].join(', ');
@@ -59,7 +49,7 @@ export async function runComponent(input: ComponentInput, deps?: Partial<Inspect
   if (matches.length > 1) {
     throw new Error(
       `rendering "${input.name}" is ambiguous on ${input.route}: ${matches.length} instances found. ` +
-      `(MVP 1 scaffolds one component; multiple instances are not yet disambiguated.)`,
+      `(Scaffold a single instance is ambiguous here; use \`page <route>\` to scaffold all components, which merges duplicate instances.)`,
     );
   }
   const node = matches[0];
@@ -67,21 +57,7 @@ export async function runComponent(input: ComponentInput, deps?: Partial<Inspect
   const contract = buildContract(node, config.fieldTypeOverrides);
   const variants =
     input.variants && input.variants.length > 0 ? normalizeVariants(input.variants) : undefined;
-  const files = generateFiles(
-    contract,
-    node,
-    {
-      componentPath: config.componentPath,
-      componentFolder: config.componentFolder,
-      componentPropsImport: config.componentPropsImport,
-      sitecorePackage: config.sitecorePackage,
-      useDatasourceCheck: config.useDatasourceCheck,
-      generateMocks: config.generateMocks,
-      styling: config.styling,
-      fieldTypeOverrides: config.fieldTypeOverrides,
-    },
-    variants,
-  );
+  const files = generateFiles(contract, node, config, variants);
 
   if (input.dryRun) return { written: [], preview: files };
 

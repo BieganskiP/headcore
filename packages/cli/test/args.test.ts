@@ -31,4 +31,10 @@ describe('parseArgs', () => {
   it('throws when no command given', () => {
     expect(() => parseArgs([])).toThrow(/usage/i);
   });
+
+  it('parses page command with route as a positional', () => {
+    expect(parseArgs(['page', '/about-us', '--lang', 'da', '--dry-run'])).toEqual({
+      command: 'page', name: undefined, route: '/about-us', lang: 'da', dryRun: true, force: false, variants: [],
+    });
+  });
 });

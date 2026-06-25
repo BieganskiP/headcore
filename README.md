@@ -12,11 +12,20 @@ Content SDK-ready Next.js components from it.
 ## Commands
 
     sitecore-scaffold inspect <route>
+    sitecore-scaffold page <route> [--lang <lang>] [--dry-run] [--force]
     sitecore-scaffold component <Name> --route <route> [--lang <lang>] [--variants <A,B,C>] [--dry-run] [--force]
 
 `inspect` prints the rendering/placeholder tree for a route.
 `component` scaffolds `<Name>.tsx`, `<Name>.types.ts`, `<Name>.mock.json`, and
 (when `styling: 'css'`) `<Name>.module.css`.
+
+`page` scaffolds **every** component on a route in one pass. It dedupes
+component types and merges inferred field shapes across all instances (a field
+missing or empty on some instances becomes optional; the most specific renderer
+wins; hard type conflicts fall back to `Field<string>` with a warning). Files
+that already exist are skipped unless `--force` is passed. `--variants` is not
+supported here — scaffold the page, then re-run `component <Name> --variants …`
+for a component you want to split.
 
 ## Output location
 
