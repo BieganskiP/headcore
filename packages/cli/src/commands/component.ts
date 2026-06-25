@@ -49,7 +49,7 @@ export async function runComponent(input: ComponentInput, deps?: Partial<Inspect
   if (matches.length > 1) {
     throw new Error(
       `rendering "${input.name}" is ambiguous on ${input.route}: ${matches.length} instances found. ` +
-      `(MVP 1 scaffolds one component; multiple instances are not yet disambiguated.)`,
+      `(Scaffold a single instance is ambiguous here; use \`page <route>\` to scaffold all components, which merges duplicate instances.)`,
     );
   }
   const node = matches[0];

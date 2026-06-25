@@ -60,4 +60,19 @@ describe('mergeContracts', () => {
     expect(contract.params.sort()).toEqual(['color', 'variant']);
     expect(contract.placeholders.sort()).toEqual(['left', 'right']);
   });
+
+  it('recursively merges Cards itemFields across instances, marking partial items optional', () => {
+    const item = (extra: Record<string, unknown> = {}) => ({ fields: { label: { value: 'x' }, ...extra } });
+    const { contract } = mergeContracts(
+      [
+        node({ items: { value: [item()] } }),                                  // label only
+        node({ items: { value: [item({ icon: { value: { src: 'a.jpg' } } })] } }), // label + icon
+      ],
+      {},
+    );
+    const items = contract.fields.find((f) => f.name === 'items')!;
+    expect(items.renderer).toBe('Cards');
+    expect(items.itemFields!.find((f) => f.name === 'label')!.optional).toBe(false);
+    expect(items.itemFields!.find((f) => f.name === 'icon')!.optional).toBe(true);
+  });
 });
