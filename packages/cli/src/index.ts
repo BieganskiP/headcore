@@ -1,6 +1,7 @@
 import { parseArgs } from './args.js';
 import { runInspect } from './commands/inspect.js';
 import { runComponent } from './commands/component.js';
+import { runPage } from './commands/page.js';
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
@@ -8,6 +9,38 @@ async function main(): Promise<void> {
   if (args.command === 'inspect') {
     const out = await runInspect({ route: args.route, lang: args.lang });
     process.stdout.write(out + '\n');
+    return;
+  }
+
+  if (args.command === 'page') {
+    const result = await runPage({ route: args.route, lang: args.lang, dryRun: args.dryRun, force: args.force });
+
+    if (args.dryRun) {
+      for (const c of result.components) {
+        for (const f of c.files) process.stdout.write(`\n--- ${f.path} ---\n${f.contents}`);
+      }
+      return;
+    }
+
+    process.stdout.write(`Page ${result.route} — ${result.components.length} component type(s) found\n\n`);
+    const generated = result.components.filter((c) => c.status === 'generated');
+    const skipped = result.components.filter((c) => c.status === 'skipped');
+
+    if (generated.length > 0) {
+      process.stdout.write('Generated:\n');
+      for (const c of generated) {
+        const merged = c.instanceCount > 1 ? `   [merged from ${c.instanceCount} instances]` : '';
+        process.stdout.write(`  ${c.name} (${c.files.length} file(s))${merged}\n`);
+      }
+    }
+    if (skipped.length > 0) {
+      process.stdout.write('Skipped (already exist, use --force):\n');
+      for (const c of skipped) process.stdout.write(`  ${c.name}\n`);
+    }
+    if (result.warnings.length > 0) {
+      process.stdout.write('\nWarnings:\n');
+      for (const w of result.warnings) process.stdout.write(`  ${w}\n`);
+    }
     return;
   }
 
