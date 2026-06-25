@@ -71,9 +71,9 @@ function mergeItemFields(
 }
 
 function unionKeys(lists: string[][]): string[] {
-  const seen: string[] = [];
-  for (const list of lists) for (const k of list) if (!seen.includes(k)) seen.push(k);
-  return seen;
+  const seen = new Set<string>();
+  for (const list of lists) for (const k of list) seen.add(k);
+  return [...seen];
 }
 
 /** Merge all instances of one component type into a single contract. */
@@ -81,6 +81,7 @@ export function mergeContracts(
   nodes: RenderingNode[],
   overrides: Record<string, string>,
 ): MergeResult {
+  if (nodes.length === 0) throw new Error('mergeContracts: nodes must not be empty');
   const name = nodes[0].componentName;
   const contracts = nodes.map((n) => buildContract(n, overrides));
   const warnings: string[] = [];
