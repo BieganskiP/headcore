@@ -37,4 +37,11 @@ describe('parseArgs', () => {
       command: 'page', name: undefined, route: '/about-us', lang: 'da', dryRun: true, force: false, variants: [],
     });
   });
+
+  it('parses the dictionary command with flags', () => {
+    expect(parseArgs(['dictionary', '--lang', 'da', '--dry-run', '--force'])).toEqual({
+      command: 'dictionary', name: undefined, route: undefined,
+      lang: 'da', dryRun: true, force: true, variants: [],
+    });
+  });
 });

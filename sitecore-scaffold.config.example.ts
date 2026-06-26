@@ -14,4 +14,6 @@ export default {
   generateMocks: true,
   styling: 'css', // 'css' (CSS Modules) | 'tailwind' | 'none'
   fieldTypeOverrides: {},
+  i18nPath: 'src/lib/i18n', // where dictionary-keys.ts and use-typed-t.ts are written
+  i18nPackage: 'next-localization', // provides useI18n() for the typed t wrapper
 };

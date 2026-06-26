@@ -50,5 +50,7 @@ export async function loadConfig(path: string): Promise<ScaffoldConfig> {
     generateMocks: loaded.generateMocks ?? true,
     styling,
     fieldTypeOverrides: loaded.fieldTypeOverrides ?? {},
+    i18nPath: loaded.i18nPath ?? 'src/lib/i18n',
+    i18nPackage: loaded.i18nPackage ?? 'next-localization',
   } as ScaffoldConfig;
 }

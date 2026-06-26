@@ -2,6 +2,7 @@ import { parseArgs } from './args.js';
 import { runInspect } from './commands/inspect.js';
 import { runComponent } from './commands/component.js';
 import { runPage } from './commands/page.js';
+import { runDictionary } from './commands/dictionary.js';
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
@@ -36,6 +37,30 @@ async function main(): Promise<void> {
     if (skipped.length > 0) {
       process.stdout.write('Skipped (already exist, use --force):\n');
       for (const c of skipped) process.stdout.write(`  ${c.name}\n`);
+    }
+    if (result.warnings.length > 0) {
+      process.stdout.write('\nWarnings:\n');
+      for (const w of result.warnings) process.stdout.write(`  ${w}\n`);
+    }
+    return;
+  }
+
+  if (args.command === 'dictionary') {
+    const result = await runDictionary({ lang: args.lang, dryRun: args.dryRun, force: args.force });
+
+    if (args.dryRun) {
+      for (const f of result.files) process.stdout.write(`\n--- ${f.path} ---\n${f.contents}`);
+      if (result.warnings.length > 0) {
+        process.stdout.write('\nWarnings:\n');
+        for (const w of result.warnings) process.stdout.write(`  ${w}\n`);
+      }
+      return;
+    }
+
+    process.stdout.write('Dictionary types generated:\n');
+    for (const f of result.files) {
+      const note = f.status === 'skipped' ? ' (skipped, already exists — use --force)' : '';
+      process.stdout.write(`  ${f.path}${note}\n`);
     }
     if (result.warnings.length > 0) {
       process.stdout.write('\nWarnings:\n');

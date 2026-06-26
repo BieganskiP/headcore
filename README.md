@@ -13,6 +13,7 @@ Content SDK-ready Next.js components from it.
 
     sitecore-scaffold inspect <route>
     sitecore-scaffold page <route> [--lang <lang>] [--dry-run] [--force]
+    sitecore-scaffold dictionary [--lang <lang>] [--dry-run] [--force]
     sitecore-scaffold component <Name> --route <route> [--lang <lang>] [--variants <A,B,C>] [--dry-run] [--force]
 
 `inspect` prints the rendering/placeholder tree for a route.
@@ -26,6 +27,22 @@ wins; hard type conflicts fall back to `Field<string>` with a warning). Files
 that already exist are skipped unless `--force` is passed. `--variants` is not
 supported here — scaffold the page, then re-run `component <Name> --variants …`
 for a component you want to split.
+
+`dictionary` fetches the site dictionary from Experience Edge and generates
+type-safe translations into `<i18nPath>` (default `src/lib/i18n`):
+
+- `dictionary-keys.ts` — a `dictionaryKeys` const map and a `DictionaryKey` type.
+  This file is **always overwritten** so it tracks the live dictionary; re-run the
+  command whenever entries are added or removed.
+- `use-typed-t.ts` — a `useTypedT()` hook wrapping `useI18n().t` (from the
+  `i18nPackage`, default `next-localization`) with keys constrained to
+  `DictionaryKey`. This file is **scaffolded once** and skipped if it exists
+  (pass `--force` to regenerate it).
+
+Use it at call sites as:
+
+    const t = useTypedT();
+    t(dictionaryKeys['Nav.Login']); // autocompleted; unknown keys are type errors
 
 ## Output location
 
