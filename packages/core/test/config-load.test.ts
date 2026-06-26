@@ -58,4 +58,19 @@ describe('loadConfig', () => {
   it('throws when config file does not exist', async () => {
     await expect(loadConfig(join(dir, 'missing.config.ts'))).rejects.toThrow(/not found/i);
   });
+
+  it('defaults i18nPath and i18nPackage when not specified', async () => {
+    const p = writeConfig(dir, `export default {
+    edge: { endpoint: process.env.SITECORE_EDGE_URL, apiKey: process.env.SITECORE_EDGE_TOKEN, site: 'my-site', defaultLanguage: 'en' },
+    componentPath: 'src/components',
+    componentPropsImport: 'lib/component-props',
+    sitecorePackage: '@sitecore-content-sdk/nextjs',
+    useDatasourceCheck: true,
+    generateMocks: true,
+    fieldTypeOverrides: {},
+  };`);
+    const cfg = await loadConfig(p);
+    expect(cfg.i18nPath).toBe('src/lib/i18n');
+    expect(cfg.i18nPackage).toBe('next-localization');
+  });
 });

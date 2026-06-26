@@ -19,6 +19,10 @@ export interface ScaffoldConfig {
   /** Styling strategy for generated components. Defaults to 'css' (CSS Modules). */
   styling: StylingMode;
   fieldTypeOverrides: Record<string, string>;
+  /** Output directory for generated i18n artifacts (dictionary keys + typed t wrapper). */
+  i18nPath: string;
+  /** Package that provides `useI18n` for the generated typed t wrapper. */
+  i18nPackage: string;
 }
 
 /** A single field's raw value as returned in layout JSON. */
