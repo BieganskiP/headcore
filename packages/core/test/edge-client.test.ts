@@ -49,3 +49,52 @@ describe('EdgeClient.getLayout', () => {
     await expect(client.getLayout('/missing', 'en')).rejects.toThrow(/no route/i);
   });
 });
+
+describe('EdgeClient.getDictionary', () => {
+  it('follows pagination and concatenates all entries', async () => {
+    const page1 = {
+      data: { site: { siteInfo: { dictionary: {
+        results: [{ key: 'Nav.Login', value: 'Log in' }],
+        pageInfo: { endCursor: 'CURSOR1', hasNext: true },
+      } } } },
+    };
+    const page2 = {
+      data: { site: { siteInfo: { dictionary: {
+        results: [{ key: 'Home.Title', value: 'Home' }],
+        pageInfo: { endCursor: 'CURSOR2', hasNext: false },
+      } } } },
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => page1 })
+      .mockResolvedValueOnce({ ok: true, json: async () => page2 });
+    const client = new EdgeClient(config, fetchMock as unknown as typeof fetch);
+
+    const entries = await client.getDictionary('en');
+
+    expect(entries).toEqual([
+      { key: 'Nav.Login', value: 'Log in' },
+      { key: 'Home.Title', value: 'Home' },
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // Second call must pass the first page's endCursor as `after`.
+    const secondBody = JSON.parse(fetchMock.mock.calls[1][1].body as string);
+    expect(secondBody.variables.after).toBe('CURSOR1');
+    expect(secondBody.variables).toMatchObject({ site: 'my-site', language: 'en' });
+  });
+
+  it('throws on GraphQL errors array', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ errors: [{ message: 'bad dictionary query' }] }),
+    });
+    const client = new EdgeClient(config, fetchMock as unknown as typeof fetch);
+    await expect(client.getDictionary('en')).rejects.toThrow(/bad dictionary query/);
+  });
+
+  it('throws masking the key on HTTP error', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 401, text: async () => 'unauthorized' });
+    const client = new EdgeClient(config, fetchMock as unknown as typeof fetch);
+    await expect(client.getDictionary('en')).rejects.toThrow(/401/);
+    await expect(client.getDictionary('en')).rejects.not.toThrow(/secret-token/);
+  });
+});
