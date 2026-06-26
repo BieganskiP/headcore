@@ -3,7 +3,7 @@ export function renderTypedTFile(i18nPackage: string): string {
 import type { DictionaryKey } from './dictionary-keys';
 
 /**
- * Type-safe wrapper over next-localization's \`t\`. Keys are constrained to the
+ * Type-safe wrapper over the configured i18n provider's \`t\`. Keys are constrained to the
  * generated \`DictionaryKey\` union, so unknown keys are compile-time errors.
  * Customize freely — this file is scaffolded once and never overwritten without --force.
  */

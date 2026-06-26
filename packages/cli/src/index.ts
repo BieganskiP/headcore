@@ -50,6 +50,10 @@ async function main(): Promise<void> {
 
     if (args.dryRun) {
       for (const f of result.files) process.stdout.write(`\n--- ${f.path} ---\n${f.contents}`);
+      if (result.warnings.length > 0) {
+        process.stdout.write('\nWarnings:\n');
+        for (const w of result.warnings) process.stdout.write(`  ${w}\n`);
+      }
       return;
     }
 
