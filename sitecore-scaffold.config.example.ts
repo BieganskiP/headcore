@@ -1,8 +1,12 @@
-// Copy to sitecore-scaffold.config.ts and fill in. Secrets come from env vars.
+// Copy to sitecore-scaffold.config.ts and fill in. Secrets come from env vars
+// (.env.local and .env next to this file are loaded automatically; shell env wins).
 export default {
   edge: {
-    endpoint: process.env.SITECORE_EDGE_URL!,   // e.g. https://edge.sitecorecloud.io/api/graphql/v1
-    apiKey: process.env.SITECORE_EDGE_TOKEN!,    // never hardcode; read from env only
+    // Modern XM Cloud (Content SDK) auth — the Edge Context ID:
+    contextId: process.env.SITECORE_EDGE_CONTEXT_ID, // or reuse NEXT_PUBLIC_SITECORE_EDGE_CONTEXT_ID from your Content SDK project
+    // …or legacy Experience Edge auth (remove contextId above if you use these):
+    // endpoint: process.env.SITECORE_EDGE_URL, // e.g. https://edge.sitecorecloud.io/api/graphql/v1
+    // apiKey: process.env.SITECORE_EDGE_TOKEN,
     site: 'my-site',
     defaultLanguage: 'en',
   },

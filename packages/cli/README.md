@@ -18,8 +18,15 @@ npx sitecore-scaffold inspect <route>
 
 ## Setup
 
-1. Create a `sitecore-scaffold.config.ts` in your project root.
-2. Set env vars: `SITECORE_EDGE_URL`, `SITECORE_EDGE_TOKEN`.
+1. Copy `sitecore-scaffold.config.example.ts` to `sitecore-scaffold.config.ts`.
+2. Configure auth (env vars are read from `.env.local`/`.env` next to the
+   config file automatically; shell env takes precedence):
+   - **XM Cloud (Content SDK):** set `SITECORE_EDGE_CONTEXT_ID` and use
+     `edge.contextId`. The tool talks to
+     `https://edge-platform.sitecorecloud.io/v1/content/api/graphql/v1`.
+   - **Legacy Experience Edge:** set `SITECORE_EDGE_URL` and
+     `SITECORE_EDGE_TOKEN` and use `edge.endpoint` + `edge.apiKey`.
+   Exactly one auth mode must be configured.
 3. Set `edge.site` and `edge.defaultLanguage` in the config.
 
 ## Commands
