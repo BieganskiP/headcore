@@ -109,4 +109,35 @@ describe('loadConfig', () => {
       await expect(loadConfig(p)).rejects.toThrow(/edge\.apiKey/);
     });
   });
+
+  describe('env file loading', () => {
+    it('resolves config values from .env.local next to the config file', async () => {
+      writeFileSync(join(dir, '.env.local'), 'SCAFFOLD_T1_CTX=ctx-from-env-local\n', 'utf8');
+      const p = writeConfig(dir, `export default {
+        edge: { contextId: process.env.SCAFFOLD_T1_CTX, site: 's', defaultLanguage: 'en' },${BASE}
+      };`);
+      const cfg = await loadConfig(p);
+      expect(cfg.edge.contextId).toBe('ctx-from-env-local');
+    });
+
+    it('prefers .env.local over .env', async () => {
+      writeFileSync(join(dir, '.env'), 'SCAFFOLD_T2_CTX=from-dotenv\n', 'utf8');
+      writeFileSync(join(dir, '.env.local'), 'SCAFFOLD_T2_CTX=from-dotenv-local\n', 'utf8');
+      const p = writeConfig(dir, `export default {
+        edge: { contextId: process.env.SCAFFOLD_T2_CTX, site: 's', defaultLanguage: 'en' },${BASE}
+      };`);
+      const cfg = await loadConfig(p);
+      expect(cfg.edge.contextId).toBe('from-dotenv-local');
+    });
+
+    it('never overrides vars already set in the shell', async () => {
+      process.env.SCAFFOLD_T3_CTX = 'from-shell';
+      writeFileSync(join(dir, '.env.local'), 'SCAFFOLD_T3_CTX=from-dotenv-local\n', 'utf8');
+      const p = writeConfig(dir, `export default {
+        edge: { contextId: process.env.SCAFFOLD_T3_CTX, site: 's', defaultLanguage: 'en' },${BASE}
+      };`);
+      const cfg = await loadConfig(p);
+      expect(cfg.edge.contextId).toBe('from-shell');
+    });
+  });
 });

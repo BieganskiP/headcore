@@ -1,5 +1,7 @@
 import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
+import { config as loadEnvFiles } from 'dotenv';
 import type { ScaffoldConfig } from '../types.js';
 
 const REQUIRED_STRING_FIELDS: Array<keyof ScaffoldConfig> = [
@@ -16,6 +18,11 @@ export async function loadConfig(path: string): Promise<ScaffoldConfig> {
   if (!existsSync(path)) {
     throw new Error(`Config file not found: ${path}`);
   }
+
+  // Next.js precedence: shell env > .env.local > .env. dotenv never overrides
+  // already-set keys, and with a path array the first file wins. Missing files are fine.
+  const configDir = dirname(path);
+  loadEnvFiles({ path: [join(configDir, '.env.local'), join(configDir, '.env')], quiet: true });
 
   // jiti 1.x is a CJS package; use createRequire to load it in ESM context
   const req = createRequire(import.meta.url);
