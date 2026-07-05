@@ -114,3 +114,50 @@ describe('EdgeClient.getDictionary', () => {
     await expect(client.getDictionary('en')).rejects.not.toThrow(/secret-token/);
   });
 });
+
+const contextConfig = {
+  contextId: 'ctx-123 456', // space on purpose: must be URL-encoded
+  site: 'my-site',
+  defaultLanguage: 'en',
+};
+
+describe('EdgeClient context-ID mode', () => {
+  it('posts getLayout to the edge-platform URL with sitecoreContextId and no sc_apikey header', async () => {
+    const rendered = { sitecore: { route: { placeholders: {} } } };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { layout: { item: { rendered } } } }),
+    });
+    const client = new EdgeClient(contextConfig, fetchMock as unknown as typeof fetch);
+    const result = await client.getLayout('/about-us', 'en');
+    expect(result).toEqual(rendered);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(
+      'https://edge-platform.sitecorecloud.io/v1/content/api/graphql/v1?sitecoreContextId=ctx-123%20456',
+    );
+    expect((init.headers as Record<string, string>).sc_apikey).toBeUndefined();
+    expect(JSON.parse(init.body as string).variables).toMatchObject({ site: 'my-site', routePath: '/about-us', language: 'en' });
+  });
+
+  it('posts getDictionary to the edge-platform URL with sitecoreContextId and no sc_apikey header', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: { site: { siteInfo: { dictionary: {
+          results: [{ key: 'Nav.Login', value: 'Log in' }],
+          pageInfo: { endCursor: 'C1', hasNext: false },
+        } } } },
+      }),
+    });
+    const client = new EdgeClient(contextConfig, fetchMock as unknown as typeof fetch);
+    const entries = await client.getDictionary('en');
+    expect(entries).toEqual([{ key: 'Nav.Login', value: 'Log in' }]);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain('sitecoreContextId=ctx-123%20456');
+    expect((init.headers as Record<string, string>).sc_apikey).toBeUndefined();
+  });
+
+  it('throws when neither contextId nor endpoint+apiKey is configured', () => {
+    expect(() => new EdgeClient({ site: 's', defaultLanguage: 'en' })).toThrow(/contextId|apiKey/i);
+  });
+});

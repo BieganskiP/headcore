@@ -1,6 +1,10 @@
 export interface EdgeConfig {
-  endpoint: string;
-  apiKey: string;
+  /** XM Cloud Edge Context ID (modern auth). Mutually exclusive with endpoint/apiKey. */
+  contextId?: string;
+  /** GraphQL endpoint URL (legacy Experience Edge auth). */
+  endpoint?: string;
+  /** sc_apikey value (legacy Experience Edge auth). */
+  apiKey?: string;
   site: string;
   defaultLanguage: string;
 }

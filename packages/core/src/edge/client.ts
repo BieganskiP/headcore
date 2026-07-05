@@ -25,20 +25,36 @@ interface DictionaryResponse {
   errors?: Array<{ message: string }>;
 }
 
+const EDGE_PLATFORM_URL = 'https://edge-platform.sitecorecloud.io/v1/content/api/graphql/v1';
+
+interface GraphQLResponse {
+  errors?: Array<{ message: string }>;
+}
+
 export class EdgeClient {
+  private readonly url: string;
+  private readonly headers: Record<string, string>;
+
   constructor(
     private readonly config: EdgeConfig,
     private readonly fetchFn: typeof fetch = fetch,
-  ) {}
+  ) {
+    if (config.contextId) {
+      this.url = `${EDGE_PLATFORM_URL}?sitecoreContextId=${encodeURIComponent(config.contextId)}`;
+      this.headers = { 'content-type': 'application/json' };
+    } else if (config.endpoint && config.apiKey) {
+      this.url = config.endpoint;
+      this.headers = { 'content-type': 'application/json', sc_apikey: config.apiKey };
+    } else {
+      throw new Error('EdgeConfig requires either "contextId" or "endpoint" + "apiKey"');
+    }
+  }
 
-  async getLayout(routePath: string, language: string): Promise<unknown> {
-    const res = await this.fetchFn(this.config.endpoint, {
+  private async post<T extends GraphQLResponse>(query: string, variables: Record<string, unknown>): Promise<T> {
+    const res = await this.fetchFn(this.url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json', sc_apikey: this.config.apiKey },
-      body: JSON.stringify({
-        query: LAYOUT_QUERY,
-        variables: { site: this.config.site, routePath, language },
-      }),
+      headers: this.headers,
+      body: JSON.stringify({ query, variables }),
     });
 
     if (!res.ok) {
@@ -46,10 +62,19 @@ export class EdgeClient {
       throw new Error(`Edge request failed: HTTP ${res.status} ${text}`.trim());
     }
 
-    const json = (await res.json()) as LayoutResponse;
+    const json = (await res.json()) as T;
     if (json.errors?.length) {
       throw new Error(`Edge GraphQL error: ${json.errors.map((e) => e.message).join('; ')}`);
     }
+    return json;
+  }
+
+  async getLayout(routePath: string, language: string): Promise<unknown> {
+    const json = await this.post<LayoutResponse>(LAYOUT_QUERY, {
+      site: this.config.site,
+      routePath,
+      language,
+    });
 
     const rendered = json.data?.layout?.item?.rendered;
     if (!rendered) {
@@ -63,24 +88,11 @@ export class EdgeClient {
     let after: string | null = null;
 
     do {
-      const res = await this.fetchFn(this.config.endpoint, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', sc_apikey: this.config.apiKey },
-        body: JSON.stringify({
-          query: DICTIONARY_QUERY,
-          variables: { site: this.config.site, language, after },
-        }),
+      const json: DictionaryResponse = await this.post<DictionaryResponse>(DICTIONARY_QUERY, {
+        site: this.config.site,
+        language,
+        after,
       });
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        throw new Error(`Edge request failed: HTTP ${res.status} ${text}`.trim());
-      }
-
-      const json = (await res.json()) as DictionaryResponse;
-      if (json.errors?.length) {
-        throw new Error(`Edge GraphQL error: ${json.errors.map((e) => e.message).join('; ')}`);
-      }
 
       const dict = json.data?.site?.siteInfo?.dictionary;
       entries.push(...(dict?.results ?? []));
