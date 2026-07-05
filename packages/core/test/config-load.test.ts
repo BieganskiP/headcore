@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -111,6 +111,12 @@ describe('loadConfig', () => {
   });
 
   describe('env file loading', () => {
+    afterEach(() => {
+      delete process.env.SCAFFOLD_T1_CTX;
+      delete process.env.SCAFFOLD_T2_CTX;
+      delete process.env.SCAFFOLD_T3_CTX;
+    });
+
     it('resolves config values from .env.local next to the config file', async () => {
       writeFileSync(join(dir, '.env.local'), 'SCAFFOLD_T1_CTX=ctx-from-env-local\n', 'utf8');
       const p = writeConfig(dir, `export default {
