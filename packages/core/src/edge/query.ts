@@ -14,3 +14,20 @@ export const DICTIONARY_QUERY = `query GetDictionary($site: String!, $language: 
     }
   }
 }`;
+
+export const ROUTES_QUERY = `query GetRoutes($site: String!, $language: String!, $after: String) {
+  site {
+    siteInfo(site: $site) {
+      routes(language: $language, first: 100, after: $after) {
+        results {
+          routePath
+          route {
+            name
+            updated: field(name: "__Updated") { value }
+          }
+        }
+        pageInfo { endCursor hasNext }
+      }
+    }
+  }
+}`;

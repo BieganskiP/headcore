@@ -18,3 +18,5 @@ export type { DictionaryEntry } from './edge/client.js';
 export { buildDictionary, type DictionaryBuildResult } from './dictionary/build.js';
 export { renderDictionaryFile } from './codegen/dictionary-file.js';
 export { renderTypedTFile } from './codegen/typed-t-file.js';
+export { ROUTES_QUERY } from './edge/query.js';
+export type { RouteInfo } from './edge/client.js';

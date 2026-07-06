@@ -1,5 +1,5 @@
 import type { EdgeConfig } from '../types.js';
-import { LAYOUT_QUERY, DICTIONARY_QUERY } from './query.js';
+import { LAYOUT_QUERY, DICTIONARY_QUERY, ROUTES_QUERY } from './query.js';
 
 interface LayoutResponse {
   data?: { layout?: { item?: { rendered?: unknown } | null } };
@@ -23,6 +23,36 @@ interface DictionaryResponse {
     } | null;
   };
   errors?: Array<{ message: string }>;
+}
+
+export interface RouteInfo {
+  routePath: string;
+  name: string;
+  updatedAt: string | null;
+}
+
+interface RoutesResponse {
+  data?: {
+    site?: {
+      siteInfo?: {
+        routes?: {
+          results?: Array<{
+            routePath?: string;
+            route?: { name?: string; updated?: { value?: string } | null } | null;
+          }>;
+          pageInfo?: { endCursor?: string | null; hasNext?: boolean };
+        } | null;
+      } | null;
+    } | null;
+  };
+  errors?: Array<{ message: string }>;
+}
+
+/** Normalize a Sitecore __Updated raw value ("20260628T103000Z" or ISO) to YYYY-MM-DD. */
+function normalizeUpdated(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const m = /^(\d{4})-?(\d{2})-?(\d{2})/.exec(raw);
+  return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
 }
 
 const EDGE_PLATFORM_URL = 'https://edge-platform.sitecorecloud.io/v1/content/api/graphql/v1';
@@ -102,5 +132,33 @@ export class EdgeClient {
     } while (after !== null);
 
     return entries;
+  }
+
+  async getRoutes(language: string): Promise<RouteInfo[]> {
+    const routes: RouteInfo[] = [];
+    let after: string | null = null;
+
+    do {
+      const json: RoutesResponse = await this.post<RoutesResponse>(ROUTES_QUERY, {
+        site: this.config.site,
+        language,
+        after,
+      });
+
+      const conn = json.data?.site?.siteInfo?.routes;
+      for (const r of conn?.results ?? []) {
+        if (!r.routePath) continue;
+        routes.push({
+          routePath: r.routePath,
+          name: r.route?.name ?? '',
+          updatedAt: normalizeUpdated(r.route?.updated?.value),
+        });
+      }
+
+      const pageInfo = conn?.pageInfo;
+      after = pageInfo?.hasNext && pageInfo.endCursor ? pageInfo.endCursor : null;
+    } while (after !== null);
+
+    return routes;
   }
 }
