@@ -1,5 +1,5 @@
 export interface ParsedArgs {
-  command: 'inspect' | 'component' | 'page' | 'dictionary' | 'routes';
+  command: 'inspect' | 'component' | 'page' | 'dictionary' | 'routes' | 'list' | 'info' | 'add';
   name: string | undefined;
   route: string | undefined;
   lang: string | undefined;
@@ -13,6 +13,13 @@ export interface ParsedArgs {
 }
 
 const USAGE = `usage:
+
+Library:
+  headcore list
+  headcore info <Name>
+  headcore add <Name> [--dry-run] [--force]
+
+Introspect:
   headcore inspect <route>
   headcore page <route> [--lang <lang>] [--dry-run] [--force]
   headcore dictionary [--lang <lang>] [--dry-run] [--force]
@@ -24,7 +31,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
   const [command, ...rest] = argv;
   if (
     command !== 'inspect' && command !== 'component' && command !== 'page' &&
-    command !== 'dictionary' && command !== 'routes'
+    command !== 'dictionary' && command !== 'routes' &&
+    command !== 'list' && command !== 'info' && command !== 'add'
   ) {
     throw new Error(`unknown command "${command}"\n${USAGE}`);
   }
@@ -62,8 +70,12 @@ export function parseArgs(argv: string[]): ParsedArgs {
     } else positionals.push(arg);
   }
 
-  if (command === 'inspect' || command === 'page' || command === 'dictionary' || command === 'routes') {
+  if (
+    command === 'inspect' || command === 'page' || command === 'dictionary' ||
+    command === 'routes' || command === 'list'
+  ) {
     return { command, name: undefined, route: positionals[0], lang, dryRun, force, variants, filter, sort, json, out };
   }
+  // component | info | add — take a <Name> positional
   return { command, name: positionals[0], route, lang, dryRun, force, variants, filter, sort, json, out };
 }
