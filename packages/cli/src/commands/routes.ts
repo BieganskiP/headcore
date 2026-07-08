@@ -1,3 +1,5 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import {
   loadConfig as defaultLoadConfig,
   EdgeClient,
@@ -19,6 +21,7 @@ export interface RoutesInput {
   filter: string | undefined;
   sort: RouteSort;
   json: boolean;
+  out: string | undefined;
 }
 
 export interface RoutesResult {
@@ -35,6 +38,13 @@ export async function runRoutes(input: RoutesInput, deps?: Partial<RoutesDeps>):
 
   const getRoutes = deps?.getRoutes ?? ((l: string) => new EdgeClient(config.edge).getRoutes(l));
   const routes = sortRoutes(filterRoutes(await getRoutes(lang), input.filter), input.sort);
+
+  if (input.out !== undefined) {
+    const target = resolve(input.out);
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, renderRoutesJson(routes) + '\n', 'utf8');
+    return { output: `Wrote ${routes.length} route(s) to ${input.out}`, count: routes.length };
+  }
 
   const output = input.json ? renderRoutesJson(routes) : renderRoutesTable(routes, lang);
   return { output, count: routes.length };
