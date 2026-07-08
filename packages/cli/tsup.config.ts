@@ -6,6 +6,8 @@ export default defineConfig({
   clean: true,
   banner: { js: '#!/usr/bin/env node' },
   // Bundle the workspace core into the CLI so the published package is
-  // self-contained. jiti stays external and is declared as a runtime dependency.
+  // self-contained. jiti and dotenv stay external and are declared as runtime
+  // dependencies — inlining a CJS dep like dotenv into the ESM bundle breaks
+  // its require() calls at startup (see test/dist-smoke.test.ts).
   noExternal: [/^@sitecore-scaffold\/core/],
 });
