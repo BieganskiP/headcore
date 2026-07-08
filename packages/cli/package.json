@@ -1,10 +1,10 @@
 {
-  "name": "sitecore-scaffold",
+  "name": "headcore",
   "version": "0.3.0",
-  "description": "Inspect Sitecore Experience Edge route layout data and scaffold typed, Content SDK-ready Next.js components from it.",
+  "description": "A component kit for headless Sitecore + Next.js: copy-in components, an introspection CLI, and manifest-driven Sitecore modeling docs.",
   "type": "module",
   "bin": {
-    "sitecore-scaffold": "./dist/index.js"
+    "headcore": "./dist/index.js"
   },
   "files": [
     "dist",
@@ -16,20 +16,20 @@
     "experience-edge",
     "content-sdk",
     "nextjs",
-    "scaffold",
+    "component-library",
     "codegen",
     "cli"
   ],
   "author": "Patryk Biegański <bieganski1996@gmail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/BieganskiP/sitecore-scaffold#readme",
+  "homepage": "https://github.com/BieganskiP/headcore#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BieganskiP/sitecore-scaffold.git",
+    "url": "git+https://github.com/BieganskiP/headcore.git",
     "directory": "packages/cli"
   },
   "bugs": {
-    "url": "https://github.com/BieganskiP/sitecore-scaffold/issues"
+    "url": "https://github.com/BieganskiP/headcore/issues"
   },
   "engines": {
     "node": ">=18"

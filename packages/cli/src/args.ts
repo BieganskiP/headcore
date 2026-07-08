@@ -13,11 +13,11 @@ export interface ParsedArgs {
 }
 
 const USAGE = `usage:
-  sitecore-scaffold inspect <route>
-  sitecore-scaffold page <route> [--lang <lang>] [--dry-run] [--force]
-  sitecore-scaffold dictionary [--lang <lang>] [--dry-run] [--force]
-  sitecore-scaffold routes [--lang <lang>] [--filter <substring>] [--sort path|updated] [--json] [--out <file>]
-  sitecore-scaffold component <Name> --route <route> [--lang <lang>] [--variants <A,B,C>] [--dry-run] [--force]`;
+  headcore inspect <route>
+  headcore page <route> [--lang <lang>] [--dry-run] [--force]
+  headcore dictionary [--lang <lang>] [--dry-run] [--force]
+  headcore routes [--lang <lang>] [--filter <substring>] [--sort path|updated] [--json] [--out <file>]
+  headcore component <Name> --route <route> [--lang <lang>] [--variants <A,B,C>] [--dry-run] [--force]`;
 
 export function parseArgs(argv: string[]): ParsedArgs {
   if (argv.length === 0) throw new Error(USAGE);
