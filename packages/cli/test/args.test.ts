@@ -6,14 +6,14 @@ describe('parseArgs', () => {
     expect(parseArgs(['inspect', '/about-us'])).toEqual({
       command: 'inspect', name: undefined, route: '/about-us',
       lang: undefined, dryRun: false, force: false, variants: [],
-      filter: undefined, sort: 'path', json: false,
+      filter: undefined, sort: 'path', json: false, out: undefined,
     });
   });
 
   it('parses component command with name and flags', () => {
     expect(parseArgs(['component', 'Hero', '--route', '/about-us', '--lang', 'da', '--dry-run', '--force'])).toEqual({
       command: 'component', name: 'Hero', route: '/about-us', lang: 'da', dryRun: true, force: true, variants: [],
-      filter: undefined, sort: 'path', json: false,
+      filter: undefined, sort: 'path', json: false, out: undefined,
     });
   });
 
@@ -37,7 +37,7 @@ describe('parseArgs', () => {
   it('parses page command with route as a positional', () => {
     expect(parseArgs(['page', '/about-us', '--lang', 'da', '--dry-run'])).toEqual({
       command: 'page', name: undefined, route: '/about-us', lang: 'da', dryRun: true, force: false, variants: [],
-      filter: undefined, sort: 'path', json: false,
+      filter: undefined, sort: 'path', json: false, out: undefined,
     });
   });
 
@@ -45,7 +45,7 @@ describe('parseArgs', () => {
     expect(parseArgs(['dictionary', '--lang', 'da', '--dry-run', '--force'])).toEqual({
       command: 'dictionary', name: undefined, route: undefined,
       lang: 'da', dryRun: true, force: true, variants: [],
-      filter: undefined, sort: 'path', json: false,
+      filter: undefined, sort: 'path', json: false, out: undefined,
     });
   });
 
@@ -53,7 +53,7 @@ describe('parseArgs', () => {
     expect(parseArgs(['routes', '--lang', 'da', '--filter', '/products', '--sort', 'updated', '--json'])).toEqual({
       command: 'routes', name: undefined, route: undefined,
       lang: 'da', dryRun: false, force: false, variants: [],
-      filter: '/products', sort: 'updated', json: true,
+      filter: '/products', sort: 'updated', json: true, out: undefined,
     });
   });
 
@@ -67,5 +67,16 @@ describe('parseArgs', () => {
 
   it('throws on an invalid --sort value', () => {
     expect(() => parseArgs(['routes', '--sort', 'name'])).toThrow(/--sort must be "path" or "updated"/i);
+  });
+
+  it('parses --out with a file path', () => {
+    const parsed = parseArgs(['routes', '--json', '--out', 'routes.json']);
+    expect(parsed.command).toBe('routes');
+    expect(parsed.out).toBe('routes.json');
+    expect(parsed.json).toBe(true);
+  });
+
+  it('throws when --out is missing its file path', () => {
+    expect(() => parseArgs(['routes', '--out'])).toThrow(/--out requires a file path/i);
   });
 });
