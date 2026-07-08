@@ -1,10 +1,10 @@
-import type { ComponentContract, GeneratedFile, RenderingNode, ScaffoldConfig } from '../types.js';
+import type { ComponentContract, GeneratedFile, RenderingNode, HeadcoreConfig } from '../types.js';
 import { renderTypesFile } from './types-file.js';
 import { renderComponentFile } from './component-file.js';
 import { renderMockFile } from './mock-file.js';
 import { createStyleHelper } from './styling.js';
 
-type CodegenConfig = Omit<ScaffoldConfig, 'edge'>;
+type CodegenConfig = Omit<HeadcoreConfig, 'edge'>;
 
 export function generateFiles(
   contract: ComponentContract,

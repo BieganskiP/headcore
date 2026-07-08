@@ -11,7 +11,7 @@ export interface EdgeConfig {
 
 export type StylingMode = 'css' | 'tailwind' | 'none';
 
-export interface ScaffoldConfig {
+export interface HeadcoreConfig {
   edge: EdgeConfig;
   componentPath: string;
   /** When true, each component's files go in their own `<componentPath>/<Name>/` folder. */
