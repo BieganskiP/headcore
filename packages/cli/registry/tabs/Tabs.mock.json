@@ -1,0 +1,10 @@
+{
+  "fields": {
+    "Heading": { "value": "Explore the options" }
+  },
+  "params": {
+    "Tab1Label": "Overview",
+    "Tab2Label": "Details",
+    "Tab3Label": "Pricing"
+  }
+}
