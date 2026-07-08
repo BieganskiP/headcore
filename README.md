@@ -1,16 +1,18 @@
-# sitecore-scaffold
+# headcore
 
 Inspect Sitecore Experience Edge route layout data and scaffold typed,
-Content SDK-ready Next.js components from it.
+Content SDK-ready Next.js components from it. (Evolving into a component kit for
+headless Sitecore + Next.js — see
+`docs/superpowers/specs/2026-07-08-headcore-pivot-design.md`.)
 
 > **Disclaimer:** This tool was built with the help of AI. As such, it may
 > contain bugs or rough edges. That said, it has been reviewed, tested, and
 > verified by a human before release. Please report anything that looks off via
-> the [issue tracker](https://github.com/BieganskiP/sitecore-scaffold/issues).
+> the [issue tracker](https://github.com/BieganskiP/headcore/issues).
 
 ## Setup
 
-1. Copy `sitecore-scaffold.config.example.ts` to `sitecore-scaffold.config.ts`.
+1. Copy `headcore.config.example.ts` to `headcore.config.ts`.
 2. Configure auth (env vars are read from `.env.local`/`.env` next to the
    config file automatically; shell env takes precedence):
    - **XM Cloud (Content SDK):** set `SITECORE_EDGE_CONTEXT_ID` and use
@@ -23,11 +25,11 @@ Content SDK-ready Next.js components from it.
 
 ## Commands
 
-    sitecore-scaffold inspect <route>
-    sitecore-scaffold page <route> [--lang <lang>] [--dry-run] [--force]
-    sitecore-scaffold dictionary [--lang <lang>] [--dry-run] [--force]
-    sitecore-scaffold routes [--lang <lang>] [--filter <substring>] [--sort path|updated] [--json] [--out <file>]
-    sitecore-scaffold component <Name> --route <route> [--lang <lang>] [--variants <A,B,C>] [--dry-run] [--force]
+    headcore inspect <route>
+    headcore page <route> [--lang <lang>] [--dry-run] [--force]
+    headcore dictionary [--lang <lang>] [--dry-run] [--force]
+    headcore routes [--lang <lang>] [--filter <substring>] [--sort path|updated] [--json] [--out <file>]
+    headcore component <Name> --route <route> [--lang <lang>] [--variants <A,B,C>] [--dry-run] [--force]
 
 `inspect` prints the rendering/placeholder tree for a route.
 `component` scaffolds `<Name>.tsx`, `<Name>.types.ts`, `<Name>.mock.json`, and
@@ -96,7 +98,7 @@ Nested placeholders on a rendering are scaffolded as
 Pass `--variants` to scaffold one module that exports several Content SDK
 variants of the same component:
 
-    sitecore-scaffold component GridModule --route /x --variants ThreeCard,FourCard,FiveCard
+    headcore component GridModule --route /x --variants ThreeCard,FourCard,FiveCard
 
 - `Default` is always generated first (prepended if your list omits it); it is the
   main variant.

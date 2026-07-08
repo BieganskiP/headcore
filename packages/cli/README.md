@@ -1,4 +1,4 @@
-# sitecore-scaffold
+# headcore
 
 Inspect Sitecore Experience Edge route layout data and scaffold typed,
 Content SDK-ready Next.js components from it.
@@ -6,19 +6,19 @@ Content SDK-ready Next.js components from it.
 > **Disclaimer:** This tool was built with the help of AI. As such, it may
 > contain bugs or rough edges. That said, it has been reviewed, tested, and
 > verified by a human before release. Please report anything that looks off via
-> the [issue tracker](https://github.com/BieganskiP/sitecore-scaffold/issues).
+> the [issue tracker](https://github.com/BieganskiP/headcore/issues).
 
 ## Install
 
 ```sh
-npm install -g sitecore-scaffold
+npm install -g headcore
 # or run without installing:
-npx sitecore-scaffold inspect <route>
+npx headcore inspect <route>
 ```
 
 ## Setup
 
-1. Copy `sitecore-scaffold.config.example.ts` to `sitecore-scaffold.config.ts`.
+1. Copy `headcore.config.example.ts` to `headcore.config.ts`.
 2. Configure auth (env vars are read from `.env.local`/`.env` next to the
    config file automatically; shell env takes precedence):
    - **XM Cloud (Content SDK):** set `SITECORE_EDGE_CONTEXT_ID` and use
@@ -32,10 +32,10 @@ npx sitecore-scaffold inspect <route>
 ## Commands
 
 ```sh
-sitecore-scaffold inspect <route>
-sitecore-scaffold page <route> [--lang <lang>] [--dry-run] [--force]
-sitecore-scaffold dictionary [--lang <lang>] [--dry-run] [--force]
-sitecore-scaffold component <Name> --route <route> [--lang <lang>] [--variants <A,B,C>] [--dry-run] [--force]
+headcore inspect <route>
+headcore page <route> [--lang <lang>] [--dry-run] [--force]
+headcore dictionary [--lang <lang>] [--dry-run] [--force]
+headcore component <Name> --route <route> [--lang <lang>] [--variants <A,B,C>] [--dry-run] [--force]
 ```
 
 - `inspect` prints the rendering/placeholder tree for a route.
@@ -46,7 +46,7 @@ sitecore-scaffold component <Name> --route <route> [--lang <lang>] [--variants <
 - `dictionary` fetches the site dictionary from Experience Edge and generates
   type-safe translations (`dictionary-keys.ts` + a `useTypedT()` hook).
 
-See the [project README](https://github.com/BieganskiP/sitecore-scaffold#readme)
+See the [project README](https://github.com/BieganskiP/headcore#readme)
 for full documentation on styling, placeholders, rendering variants, and type
 inference.
 
