@@ -1,4 +1,4 @@
-// Copy to sitecore-scaffold.config.ts and fill in. Secrets come from env vars
+// Copy to headcore.config.ts and fill in. Secrets come from env vars
 // (.env.local and .env next to this file are loaded automatically; shell env wins).
 export default {
   edge: {
