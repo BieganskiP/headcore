@@ -11,6 +11,7 @@ import {
   type GeneratedFile,
 } from 'headcore-core';
 import type { InspectDeps } from './inspect.js';
+import { resolveCliConfigPath } from '../config-path.js';
 
 export interface ComponentInput {
   name: string | undefined;
@@ -26,14 +27,12 @@ export interface ComponentResult {
   preview: GeneratedFile[];
 }
 
-const CONFIG_PATH = `${process.cwd()}/sitecore-scaffold.config.ts`;
-
 export async function runComponent(input: ComponentInput, deps?: Partial<InspectDeps>): Promise<ComponentResult> {
   if (!input.name) throw new Error('component requires a <Name> argument');
   if (!input.route) throw new Error('component requires --route <route>');
 
   const loadConfig = deps?.loadConfig ?? defaultLoadConfig;
-  const config = await loadConfig(CONFIG_PATH);
+  const config = await loadConfig(resolveCliConfigPath());
   const lang = input.lang ?? config.edge.defaultLanguage;
 
   const getLayout = deps?.getLayout ?? ((route: string, l: string) => new EdgeClient(config.edge).getLayout(route, l));

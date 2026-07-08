@@ -9,6 +9,7 @@ import {
   type DictionaryEntry,
   type GeneratedFile,
 } from 'headcore-core';
+import { resolveCliConfigPath } from '../config-path.js';
 
 export interface DictionaryDeps {
   loadConfig: typeof defaultLoadConfig;
@@ -32,11 +33,9 @@ export interface DictionaryResult {
   warnings: string[];
 }
 
-const CONFIG_PATH = `${process.cwd()}/sitecore-scaffold.config.ts`;
-
 export async function runDictionary(input: DictionaryInput, deps?: Partial<DictionaryDeps>): Promise<DictionaryResult> {
   const loadConfig = deps?.loadConfig ?? defaultLoadConfig;
-  const config = await loadConfig(CONFIG_PATH);
+  const config = await loadConfig(resolveCliConfigPath());
   const lang = input.lang ?? config.edge.defaultLanguage;
 
   const getDictionary = deps?.getDictionary ?? ((l: string) => new EdgeClient(config.edge).getDictionary(l));

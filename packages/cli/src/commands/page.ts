@@ -11,6 +11,7 @@ import {
   type GeneratedFile,
 } from 'headcore-core';
 import type { InspectDeps } from './inspect.js';
+import { resolveCliConfigPath } from '../config-path.js';
 
 export interface PageInput {
   route: string | undefined;
@@ -32,13 +33,11 @@ export interface PageResult {
   warnings: string[];
 }
 
-const CONFIG_PATH = `${process.cwd()}/sitecore-scaffold.config.ts`;
-
 export async function runPage(input: PageInput, deps?: Partial<InspectDeps>): Promise<PageResult> {
   if (!input.route) throw new Error('page requires a <route> argument');
 
   const loadConfig = deps?.loadConfig ?? defaultLoadConfig;
-  const config = await loadConfig(CONFIG_PATH);
+  const config = await loadConfig(resolveCliConfigPath());
   const lang = input.lang ?? config.edge.defaultLanguage;
 
   const getLayout = deps?.getLayout ?? ((route: string, l: string) => new EdgeClient(config.edge).getLayout(route, l));

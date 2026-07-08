@@ -1,5 +1,7 @@
 export * from './types.js';
 export { loadConfig } from './config/load.js';
+export { resolveConfigPath } from './config/resolve-path.js';
+export type { ResolvedConfigPath } from './config/resolve-path.js';
 export { EdgeClient } from './edge/client.js';
 export { LAYOUT_QUERY } from './edge/query.js';
 export { parseLayout } from './inspect/parse.js';

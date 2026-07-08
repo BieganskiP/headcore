@@ -10,6 +10,7 @@ import {
   type RouteInfo,
   type RouteSort,
 } from 'headcore-core';
+import { resolveCliConfigPath } from '../config-path.js';
 
 export interface RoutesDeps {
   loadConfig: typeof defaultLoadConfig;
@@ -29,11 +30,9 @@ export interface RoutesResult {
   count: number;
 }
 
-const CONFIG_PATH = `${process.cwd()}/sitecore-scaffold.config.ts`;
-
 export async function runRoutes(input: RoutesInput, deps?: Partial<RoutesDeps>): Promise<RoutesResult> {
   const loadConfig = deps?.loadConfig ?? defaultLoadConfig;
-  const config = await loadConfig(CONFIG_PATH);
+  const config = await loadConfig(resolveCliConfigPath());
   const lang = input.lang ?? config.edge.defaultLanguage;
 
   const getRoutes = deps?.getRoutes ?? ((l: string) => new EdgeClient(config.edge).getRoutes(l));
