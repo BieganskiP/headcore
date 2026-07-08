@@ -26,7 +26,7 @@ Content SDK-ready Next.js components from it.
     sitecore-scaffold inspect <route>
     sitecore-scaffold page <route> [--lang <lang>] [--dry-run] [--force]
     sitecore-scaffold dictionary [--lang <lang>] [--dry-run] [--force]
-    sitecore-scaffold routes [--lang <lang>] [--filter <substring>] [--sort path|updated] [--json]
+    sitecore-scaffold routes [--lang <lang>] [--filter <substring>] [--sort path|updated] [--json] [--out <file>]
     sitecore-scaffold component <Name> --route <route> [--lang <lang>] [--variants <A,B,C>] [--dry-run] [--force]
 
 `inspect` prints the rendering/placeholder tree for a route.
@@ -64,6 +64,7 @@ a Sitecore dev for URLs. `--filter <substring>` narrows by path
 path), and `--json` emits `[{ routePath, name, updatedAt }]` for scripting.
 Zero matches is not an error: you get `0 routes (lang: xx)` (or `[]`) and exit
 code 0.
+Pass `--out <file>` to save the JSON export to a file instead of printing it (`--json` is implied); the file is written UTF-8 without a BOM, parent directories are created, and an existing file is overwritten.
 
 ## Output location
 
