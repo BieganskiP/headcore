@@ -1,5 +1,5 @@
 {
-  "name": "sitecore-scaffold-monorepo",
+  "name": "sitecore-scaffold",
   "private": false,
   "type": "module",
   "workspaces": [
