@@ -23,3 +23,12 @@ export { renderTypedTFile } from './codegen/typed-t-file.js';
 export { ROUTES_QUERY } from './edge/query.js';
 export type { RouteInfo } from './edge/client.js';
 export { filterRoutes, sortRoutes, renderRoutesTable, renderRoutesJson, type RouteSort } from './routes/format.js';
+export { parseManifest } from './registry/manifest.js';
+export type {
+  ComponentManifest,
+  SitecoreContract,
+  SitecoreField,
+  SitecoreTemplate,
+  SitecoreRendering,
+  SitecorePlaceholder,
+} from './registry/manifest.js';
