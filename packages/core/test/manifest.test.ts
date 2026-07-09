@@ -101,4 +101,10 @@ describe('parseManifest', () => {
       parseManifest({ ...valid, sitecore: { ...valid.sitecore, placement: 42 } }),
     ).toThrow(/placement/i);
   });
+
+  it('throws for an empty-string placement', () => {
+    expect(() =>
+      parseManifest({ ...valid, sitecore: { ...valid.sitecore, placement: '' } }),
+    ).toThrow(/placement/i);
+  });
 });

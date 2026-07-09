@@ -59,4 +59,18 @@ describe('renderSitecoreInstructions', () => {
     };
     expect(renderSitecoreInstructions(noParams)).toContain('None.');
   });
+
+  it('renders a Placement section when placement is present', () => {
+    const withPlacement: ComponentManifest = {
+      ...manifest,
+      sitecore: { ...manifest.sitecore, placement: 'Add once to a shared placeholder.' },
+    };
+    const md = renderSitecoreInstructions(withPlacement);
+    expect(md).toContain('## 5. Placement');
+    expect(md).toContain('Add once to a shared placeholder.');
+  });
+
+  it('omits the Placement section when placement is absent', () => {
+    expect(renderSitecoreInstructions(manifest)).not.toContain('Placement');
+  });
 });
