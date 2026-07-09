@@ -1,20 +1,15 @@
 {
   "name": "Tabs",
-  "description": "A client-side tabbed container. Each tab panel exposes a Sitecore placeholder (tabs-1..tabs-3), so authors can drop any rendering into a tab.",
-  "files": ["Tabs.tsx", "Tabs.types.ts", "Tabs.module.css", "Tabs.mock.json"],
+  "description": "An accessible, placeholder-driven tabbed container. Authors add any number of Tab components into its placeholder; each Tab supplies a title and its own content placeholder. Full keyboard support (arrow keys, Home/End) and reveals all panels in the Sitecore editor.",
+  "files": ["Tabs.tsx", "Tabs.types.ts", "Tabs.module.css"],
   "dependencies": [],
-  "registryDependencies": [],
+  "registryDependencies": ["tab"],
   "sitecore": {
-    "template": {
-      "name": "Tabs",
-      "fields": [{ "name": "Heading", "type": "Single-Line Text" }]
-    },
+    "template": { "name": "Tabs", "fields": [] },
     "rendering": { "componentName": "Tabs", "type": "JSON Rendering" },
     "placeholders": [
-      { "key": "tabs-1", "dynamic": false, "allowedRenderings": ["*"] },
-      { "key": "tabs-2", "dynamic": false, "allowedRenderings": ["*"] },
-      { "key": "tabs-3", "dynamic": false, "allowedRenderings": ["*"] }
+      { "key": "headcore-tabs", "dynamic": false, "allowedRenderings": ["Tab"] }
     ],
-    "params": ["Tab1Label", "Tab2Label", "Tab3Label"]
+    "params": []
   }
 }

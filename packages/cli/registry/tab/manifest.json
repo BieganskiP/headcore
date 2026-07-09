@@ -1,0 +1,15 @@
+{
+  "name": "Tab",
+  "description": "A single tab within a Tabs component. Provides the tab's title and a placeholder for the tab's own content.",
+  "files": ["Tab.tsx", "Tab.types.ts"],
+  "dependencies": [],
+  "registryDependencies": [],
+  "sitecore": {
+    "template": { "name": "Tab", "fields": [{ "name": "title", "type": "Single-Line Text" }] },
+    "rendering": { "componentName": "Tab", "type": "JSON Rendering" },
+    "placeholders": [
+      { "key": "headcore-tab-content", "dynamic": true, "allowedRenderings": ["*"] }
+    ],
+    "params": []
+  }
+}

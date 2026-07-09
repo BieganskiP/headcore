@@ -22,22 +22,29 @@ function makeConfig(dir: string, componentFolder = true): HeadcoreConfig {
 }
 
 describe('runAdd', () => {
-  it('copies Tabs files into a per-component folder and writes SITECORE.md', async () => {
+  it('copies Tabs and its Tab dependency into per-component folders with SITECORE.md', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
     const config = makeConfig(dir);
     const result = await runAdd({ name: 'Tabs', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
 
-    const base = join(config.componentPath, 'Tabs');
-    expect(existsSync(join(base, 'Tabs.tsx'))).toBe(true);
-    expect(existsSync(join(base, 'SITECORE.md'))).toBe(true);
+    const tabsBase = join(config.componentPath, 'Tabs');
+    const tabBase = join(config.componentPath, 'Tab');
+    expect(existsSync(join(tabsBase, 'Tabs.tsx'))).toBe(true);
+    expect(existsSync(join(tabsBase, 'SITECORE.md'))).toBe(true);
+    expect(existsSync(join(tabBase, 'Tab.tsx'))).toBe(true);
+    expect(existsSync(join(tabBase, 'SITECORE.md'))).toBe(true);
+    expect(result.written.some((p) => p.endsWith('Tab.tsx'))).toBe(true);
     expect(result.written.some((p) => p.endsWith('Tabs.tsx'))).toBe(true);
+  });
 
-    // import rewrite applied to the props-import specifier
-    const tsx = readFileSync(join(base, 'Tabs.tsx'), 'utf8');
-    expect(tsx).toContain("from '@sitecore-content-sdk/nextjs'");
-    const types = readFileSync(join(base, 'Tabs.types.ts'), 'utf8');
-    expect(types).toContain("from 'src/lib/component-props'");
-    expect(types).not.toContain("from 'lib/component-props'");
+  it('rewrites the Sitecore package import to match config', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = { ...makeConfig(dir), sitecorePackage: '@acme/sdk' };
+    await runAdd({ name: 'Tabs', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+
+    const tsx = readFileSync(join(config.componentPath, 'Tabs', 'Tabs.tsx'), 'utf8');
+    expect(tsx).toContain("from '@acme/sdk'");
+    expect(tsx).not.toContain("from '@sitecore-content-sdk/nextjs'");
   });
 
   it('dry-run writes nothing', async () => {

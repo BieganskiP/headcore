@@ -1,46 +1,109 @@
 'use client';
 
-import { useState } from 'react';
-import { Text, Placeholder } from '@sitecore-content-sdk/nextjs';
-
+import { useState, useRef } from 'react';
+import type { KeyboardEvent } from 'react';
+import {
+  Placeholder, Text, useSitecore,
+  ComponentRendering, HtmlElementRendering, Field, Item,
+} from '@sitecore-content-sdk/nextjs';
 import { TabsProps } from './Tabs.types';
 import styles from './Tabs.module.css';
 
-const TAB_COUNT = 3;
+const TABS_PLACEHOLDER = 'headcore-tabs';
 
-const Tabs = ({ fields, params, rendering }: TabsProps) => {
+function isComponentRendering(
+  r: ComponentRendering | HtmlElementRendering,
+): r is ComponentRendering {
+  return 'fields' in r;
+}
+
+function isTextField(field: Field | Item | Item[] | undefined): field is Field<string> {
+  return !!field && 'value' in field && typeof (field as Field).value === 'string';
+}
+
+const Tabs = ({ rendering }: TabsProps) => {
+  const tabs = (rendering.placeholders?.[TABS_PLACEHOLDER] ?? []).filter(isComponentRendering);
+  const isEditing = useSitecore().page.mode.isEditing;
+
   const [active, setActive] = useState(0);
-  const labels = [params?.Tab1Label, params?.Tab2Label, params?.Tab3Label];
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const focusTab = (i: number) => {
+    setActive(i);
+    tabRefs.current[i]?.focus();
+  };
+
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    const last = tabs.length - 1;
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        e.preventDefault();
+        focusTab(active === last ? 0 : active + 1);
+        break;
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        e.preventDefault();
+        focusTab(active === 0 ? last : active - 1);
+        break;
+      case 'Home':
+        e.preventDefault();
+        focusTab(0);
+        break;
+      case 'End':
+        e.preventDefault();
+        focusTab(last);
+        break;
+    }
+  };
 
   return (
-    <section className={styles.root}>
-      {fields?.Heading && (
-        <div className={styles.heading}>
-          <Text tag="h2" field={fields.Heading} />
-        </div>
-      )}
-
-      <div role="tablist" className={styles.tablist}>
-        {Array.from({ length: TAB_COUNT }).map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            role="tab"
-            aria-selected={active === i}
-            className={active === i ? styles.tabActive : styles.tab}
-            onClick={() => setActive(i)}
-          >
-            {labels[i] || `Tab ${i + 1}`}
-          </button>
-        ))}
+    <div className={styles.root}>
+      <div role="tablist" aria-orientation="horizontal" className={styles.tablist}>
+        {tabs.map((tab, i) => {
+          const selected = active === i;
+          return (
+            <button
+              key={tab.uid ?? i}
+              ref={(el) => {
+                tabRefs.current[i] = el;
+              }}
+              id={`tab-${tab.uid}`}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              aria-controls={`panel-${tab.uid}`}
+              tabIndex={selected ? 0 : -1}
+              className={selected ? styles.tabActive : styles.tab}
+              onClick={() => setActive(i)}
+              onKeyDown={onKeyDown}
+            >
+              {isTextField(tab.fields?.title) ? <Text field={tab.fields.title} /> : `Tab ${i + 1}`}
+            </button>
+          );
+        })}
       </div>
 
-      {Array.from({ length: TAB_COUNT }).map((_, i) => (
-        <div key={i} role="tabpanel" hidden={active !== i} className={styles.panel}>
-          <Placeholder name={`tabs-${i + 1}`} rendering={rendering} />
-        </div>
-      ))}
-    </section>
+      <Placeholder
+        name={TABS_PLACEHOLDER}
+        rendering={rendering}
+        renderEach={(component, i) => {
+          const tab = tabs[i];
+          return (
+            <div
+              key={tab?.uid ?? i}
+              id={`panel-${tab?.uid}`}
+              role="tabpanel"
+              aria-labelledby={`tab-${tab?.uid}`}
+              hidden={!(isEditing || active === i)}
+              className={styles.panel}
+            >
+              {component}
+            </div>
+          );
+        }}
+      />
+    </div>
   );
 };
 

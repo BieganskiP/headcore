@@ -45,3 +45,27 @@ export function readComponentFiles(name: string, root: string = defaultRegistryR
     contents: readFileSync(join(root, dir, file), 'utf8'),
   }));
 }
+
+/**
+ * Resolve a component together with its transitive `registryDependencies`,
+ * dependencies first, deduped and cycle-safe. Returns canonical component names.
+ */
+export function resolveComponentNames(name: string, root: string = defaultRegistryRoot()): string[] {
+  const ordered: string[] = [];
+  const done = new Set<string>();
+  const inProgress = new Set<string>();
+
+  const visit = (n: string) => {
+    const manifest = readComponentManifest(n, root);
+    const key = manifest.name.toLowerCase();
+    if (done.has(key) || inProgress.has(key)) return;
+    inProgress.add(key);
+    for (const dep of manifest.registryDependencies) visit(dep);
+    inProgress.delete(key);
+    done.add(key);
+    ordered.push(manifest.name);
+  };
+
+  visit(name);
+  return ordered;
+}
