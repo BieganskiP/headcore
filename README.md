@@ -48,6 +48,15 @@ overwrite existing files.
 - **Tab** — a single tab within `Tabs`. Supplies the tab's `title` and exposes its
   own content placeholder for arbitrary renderings. Guarded with
   `withDatasourceCheck` so a tab without a datasource is flagged in the editor.
+- **Accordion** — an accessible, placeholder-driven accordion. Authors add any
+  number of `AccordionItem` components into its placeholder; panels start collapsed
+  and the `AllowMultiple` rendering parameter (Checkbox) controls whether several
+  panels can stay open at once. Full keyboard support (arrow keys, Home/End) and,
+  in the Sitecore editor, all panels are revealed at once. Depends on
+  `AccordionItem` (added automatically).
+- **AccordionItem** — a single section within `Accordion`. Supplies the section's
+  `title` and exposes its own content placeholder for arbitrary renderings. Guarded
+  with `withDatasourceCheck`.
 
 ## Install
 

@@ -1,0 +1,21 @@
+{
+  "name": "Accordion",
+  "description": "An accessible, placeholder-driven accordion. Authors add any number of AccordionItem components into its placeholder; each item supplies a title and its own content placeholder. Panels start collapsed; the AllowMultiple rendering parameter lets several panels stay open at once. Full keyboard support (arrow keys, Home/End) and reveals all panels in the Sitecore editor.",
+  "files": ["Accordion.tsx", "Accordion.types.ts", "Accordion.module.css"],
+  "dependencies": [],
+  "registryDependencies": ["accordion-item"],
+  "sitecore": {
+    "template": { "name": "Accordion", "fields": [] },
+    "rendering": { "componentName": "Accordion", "type": "JSON Rendering" },
+    "placeholders": [
+      { "key": "headcore-accordion", "dynamic": false, "allowedRenderings": ["AccordionItem"] }
+    ],
+    "params": [
+      {
+        "name": "AllowMultiple",
+        "type": "Checkbox",
+        "description": "Allow multiple panels to be open at once (default: one at a time)."
+      }
+    ]
+  }
+}

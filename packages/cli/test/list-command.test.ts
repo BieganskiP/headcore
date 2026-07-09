@@ -7,4 +7,10 @@ describe('runList', () => {
     expect(out).toContain('Tabs');
     expect(out).toContain('tabbed container');
   });
+
+  it('lists Accordion with its description', () => {
+    const out = runList();
+    expect(out).toContain('Accordion');
+    expect(out).toContain('accordion');
+  });
 });

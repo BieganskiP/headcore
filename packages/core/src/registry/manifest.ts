@@ -24,12 +24,19 @@ export interface SitecorePlaceholder {
   allowedRenderings: string[];
 }
 
+export interface SitecoreParam {
+  name: string;
+  /** Sitecore parameter field type label, e.g. "Checkbox". */
+  type?: string;
+  description?: string;
+}
+
 export interface SitecoreContract {
   template: SitecoreTemplate;
   rendering: SitecoreRendering;
   placeholders: SitecorePlaceholder[];
-  /** Rendering parameter names. */
-  params: string[];
+  /** Rendering parameters (plain names or typed entries). */
+  params: SitecoreParam[];
 }
 
 export interface ComponentManifest {
@@ -51,6 +58,30 @@ function assert(cond: unknown, msg: string): asserts cond {
 function asStringArray(value: unknown, field: string): string[] {
   assert(Array.isArray(value) && value.every((v) => typeof v === 'string'), `"${field}" must be a string array`);
   return value as string[];
+}
+
+function asParams(value: unknown): SitecoreParam[] {
+  if (value === undefined) return [];
+  assert(Array.isArray(value), '"sitecore.params" must be an array');
+  return value.map((p, i) => {
+    if (typeof p === 'string') {
+      assert(p.length > 0, `param #${i} name must not be empty`);
+      return { name: p };
+    }
+    assert(p && typeof p === 'object', `param #${i} must be a string or an object`);
+    const pp = p as Record<string, unknown>;
+    assert(typeof pp.name === 'string' && pp.name.length > 0, `param #${i} needs a "name"`);
+    const out: SitecoreParam = { name: pp.name };
+    if (pp.type !== undefined) {
+      assert(typeof pp.type === 'string', `param #${i} "type" must be a string`);
+      out.type = pp.type;
+    }
+    if (pp.description !== undefined) {
+      assert(typeof pp.description === 'string', `param #${i} "description" must be a string`);
+      out.description = pp.description;
+    }
+    return out;
+  });
 }
 
 /** Validate and normalize a parsed manifest object (e.g. from JSON.parse). */
@@ -98,7 +129,7 @@ export function parseManifest(raw: unknown): ComponentManifest {
     };
   });
 
-  const params = sc.params === undefined ? [] : asStringArray(sc.params, 'sitecore.params');
+  const params = asParams(sc.params);
 
   return {
     name: m.name,

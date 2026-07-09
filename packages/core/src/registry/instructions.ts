@@ -18,7 +18,15 @@ export function renderSitecoreInstructions(m: ComponentManifest): string {
     .join('\n');
 
   const paramLines =
-    params.length > 0 ? params.map((p) => `   - ${p}`).join('\n') : '   - None.';
+    params.length > 0
+      ? params
+          .map((p) => {
+            const type = p.type ? ` (${p.type})` : '';
+            const desc = p.description ? ` — ${p.description}` : '';
+            return `   - ${p.name}${type}${desc}`;
+          })
+          .join('\n')
+      : '   - None.';
 
   return `# Sitecore setup for ${m.name}
 

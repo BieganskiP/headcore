@@ -1,0 +1,15 @@
+{
+  "name": "AccordionItem",
+  "description": "A single section within an Accordion component. Provides the section's title and a placeholder for the section's own content.",
+  "files": ["AccordionItem.tsx", "AccordionItem.types.ts"],
+  "dependencies": [],
+  "registryDependencies": [],
+  "sitecore": {
+    "template": { "name": "AccordionItem", "fields": [{ "name": "title", "type": "Single-Line Text" }] },
+    "rendering": { "componentName": "AccordionItem", "type": "JSON Rendering" },
+    "placeholders": [
+      { "key": "headcore-accordion-item-content", "dynamic": true, "allowedRenderings": ["*"] }
+    ],
+    "params": []
+  }
+}

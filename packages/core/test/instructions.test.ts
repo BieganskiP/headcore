@@ -15,7 +15,7 @@ const manifest: ComponentManifest = {
       { key: 'tabs-1', dynamic: false, allowedRenderings: ['*'] },
       { key: 'tabs-2', dynamic: false, allowedRenderings: ['*'] },
     ],
-    params: ['Tab1Label', 'Tab2Label'],
+    params: [{ name: 'Tab1Label' }, { name: 'Tab2Label' }],
   },
 };
 
@@ -36,5 +36,27 @@ describe('renderSitecoreInstructions', () => {
       sitecore: { ...manifest.sitecore, template: { name: 'Tabs', fields: [] } },
     };
     expect(renderSitecoreInstructions(noFields)).toContain('No datasource fields');
+  });
+
+  it('renders a typed param with its type and description', () => {
+    const typed: ComponentManifest = {
+      ...manifest,
+      sitecore: {
+        ...manifest.sitecore,
+        params: [
+          { name: 'AllowMultiple', type: 'Checkbox', description: 'Allow multiple panels to be open at once.' },
+        ],
+      },
+    };
+    const md = renderSitecoreInstructions(typed);
+    expect(md).toContain('AllowMultiple (Checkbox) — Allow multiple panels to be open at once.');
+  });
+
+  it('still says None when there are no params', () => {
+    const noParams: ComponentManifest = {
+      ...manifest,
+      sitecore: { ...manifest.sitecore, params: [] },
+    };
+    expect(renderSitecoreInstructions(noParams)).toContain('None.');
   });
 });
