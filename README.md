@@ -1,16 +1,65 @@
 # headcore
 
-Inspect Sitecore Experience Edge route layout data and scaffold typed,
-Content SDK-ready Next.js components from it. (Evolving into a component kit for
-headless Sitecore + Next.js — see
-`docs/superpowers/specs/2026-07-08-headcore-pivot-design.md`.)
+**headcore** is a component kit for headless Sitecore + Next.js (Content SDK). It
+gives you two ways to build:
+
+- **Library** — copy in pre-built, accessible components you own and edit
+  (shadcn-style), each shipped with instructions for modeling its Sitecore side.
+- **Introspect** — inspect a live Experience Edge instance and scaffold typed,
+  Content SDK-ready components from its layout data.
 
 > **Disclaimer:** This tool was built with the help of AI. As such, it may
 > contain bugs or rough edges. That said, it has been reviewed, tested, and
 > verified by a human before release. Please report anything that looks off via
 > the [issue tracker](https://github.com/BieganskiP/headcore/issues).
 
+## Library (copy-in components)
+
+```sh
+headcore list             # see available components
+headcore info <Name>      # component details + how to model its Sitecore side
+headcore add <Name>       # copy the component into your project + write SITECORE.md
+```
+
+`list` and `info` need no config. `add` reads your `headcore.config.ts` (see
+[Setup](#setup)) and, for each component:
+
+- copies its source files into `componentPath` (honoring `componentFolder`);
+- rewrites the `@sitecore-content-sdk/nextjs` and `lib/component-props` imports to
+  match your `sitecorePackage` and `componentPropsImport`;
+- pulls in any components it depends on automatically — e.g. `add Tabs` also adds
+  `Tab`;
+- includes the `withDatasourceCheck` guard on datasourced components by default,
+  and strips it when your config sets `useDatasourceCheck: false` (mirroring the
+  introspect codegen);
+- writes a `SITECORE.md` describing the template, rendering, placeholders, and
+  parameters to create in Sitecore.
+
+Use `--dry-run` to preview the files that would be written, and `--force` to
+overwrite existing files.
+
+### Available components
+
+- **Tabs** — an accessible, placeholder-driven tabbed container. Authors add any
+  number of `Tab` components into its placeholder in the Page Editor; there is no
+  fixed tab count. Full WAI-ARIA keyboard support (arrow keys, Home/End, roving
+  tabindex) and, in the Sitecore editor, all panels are revealed at once so every
+  tab's content is editable. Depends on `Tab` (added automatically).
+- **Tab** — a single tab within `Tabs`. Supplies the tab's `title` and exposes its
+  own content placeholder for arbitrary renderings. Guarded with
+  `withDatasourceCheck` so a tab without a datasource is flagged in the editor.
+
+## Install
+
+```sh
+npm install -g headcore
+# or run without installing:
+npx headcore list
+```
+
 ## Setup
+
+Required for `add` and all introspect commands (`list`/`info` do not need it):
 
 1. Copy `headcore.config.example.ts` to `headcore.config.ts`.
 2. Configure auth (env vars are read from `.env.local`/`.env` next to the
@@ -23,7 +72,7 @@ headless Sitecore + Next.js — see
    Exactly one auth mode must be configured.
 3. Set `edge.site` and `edge.defaultLanguage` in the config.
 
-## Commands
+## Introspect commands
 
     headcore inspect <route>
     headcore page <route> [--lang <lang>] [--dry-run] [--force]
@@ -72,20 +121,23 @@ directories are created, and an existing file is overwritten.
 
 ## Output location
 
-- `componentPath` — base directory for generated components (default
-  `src/components/sitecore`).
+- `componentPath` — base directory for generated and copied-in components
+  (default `src/components/sitecore`).
 - `componentFolder` — when `true` (default), each component's files go in their
   own `<componentPath>/<Name>/` folder; when `false`, they are written flat into
   `componentPath`.
 
 ## Styling
 
-The `styling` config option controls component styles:
+The `styling` config option controls **introspect-generated** component styles:
 
 - `css` (default) — generate a `<Name>.module.css` (CSS Modules) and reference
   classes via `className={styles.root}` / `styles.card`.
 - `tailwind` — emit Tailwind utility classes inline; no CSS file.
 - `none` — plain class names, no stylesheet.
+
+(Copy-in Library components ship their own CSS Modules; the `styling` option does
+not yet transform them.)
 
 ## Placeholders
 
