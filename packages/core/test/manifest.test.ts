@@ -71,4 +71,16 @@ describe('parseManifest', () => {
       parseManifest({ ...valid, sitecore: { ...valid.sitecore, params: [{ type: 'Checkbox' }] } }),
     ).toThrow(/param/i);
   });
+
+  it('throws for an empty-string param name', () => {
+    expect(() =>
+      parseManifest({ ...valid, sitecore: { ...valid.sitecore, params: [''] } }),
+    ).toThrow(/param/i);
+  });
+
+  it('throws for a param entry that is neither string nor object', () => {
+    expect(() =>
+      parseManifest({ ...valid, sitecore: { ...valid.sitecore, params: [42] } }),
+    ).toThrow(/param/i);
+  });
 });

@@ -64,7 +64,10 @@ function asParams(value: unknown): SitecoreParam[] {
   if (value === undefined) return [];
   assert(Array.isArray(value), '"sitecore.params" must be an array');
   return value.map((p, i) => {
-    if (typeof p === 'string') return { name: p };
+    if (typeof p === 'string') {
+      assert(p.length > 0, `param #${i} name must not be empty`);
+      return { name: p };
+    }
     assert(p && typeof p === 'object', `param #${i} must be a string or an object`);
     const pp = p as Record<string, unknown>;
     assert(typeof pp.name === 'string' && pp.name.length > 0, `param #${i} needs a "name"`);
