@@ -12,6 +12,19 @@ describe('registry access', () => {
     expect(comps.map((c) => c.name)).toContain('Tabs');
   });
 
+  it('lists the Tab component', () => {
+    const comps = listComponents();
+    expect(comps.map((c) => c.name)).toContain('Tab');
+  });
+
+  it('reads the Tab manifest with a title field and dynamic content placeholder', () => {
+    const m = readComponentManifest('tab');
+    expect(m.name).toBe('Tab');
+    expect(m.sitecore.template.fields.map((f) => f.name)).toContain('title');
+    const ph = m.sitecore.placeholders.find((p) => p.key === 'headcore-tab-content');
+    expect(ph?.dynamic).toBe(true);
+  });
+
   it('reads the Tabs manifest', () => {
     const m = readComponentManifest('tabs');
     expect(m.name).toBe('Tabs');
