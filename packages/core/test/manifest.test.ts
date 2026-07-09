@@ -83,4 +83,22 @@ describe('parseManifest', () => {
       parseManifest({ ...valid, sitecore: { ...valid.sitecore, params: [42] } }),
     ).toThrow(/param/i);
   });
+
+  it('accepts an optional placement string', () => {
+    const m = parseManifest({
+      ...valid,
+      sitecore: { ...valid.sitecore, placement: 'Add once to a shared placeholder.' },
+    });
+    expect(m.sitecore.placement).toBe('Add once to a shared placeholder.');
+  });
+
+  it('defaults placement to undefined when omitted', () => {
+    expect(parseManifest(valid).sitecore.placement).toBeUndefined();
+  });
+
+  it('throws for a non-string placement', () => {
+    expect(() =>
+      parseManifest({ ...valid, sitecore: { ...valid.sitecore, placement: 42 } }),
+    ).toThrow(/placement/i);
+  });
 });

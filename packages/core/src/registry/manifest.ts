@@ -37,6 +37,8 @@ export interface SitecoreContract {
   placeholders: SitecorePlaceholder[];
   /** Rendering parameters (plain names or typed entries). */
   params: SitecoreParam[];
+  /** Optional guidance on where to place the rendering (e.g. partial design / standard values). */
+  placement?: string;
 }
 
 export interface ComponentManifest {
@@ -131,6 +133,15 @@ export function parseManifest(raw: unknown): ComponentManifest {
 
   const params = asParams(sc.params);
 
+  let placement: string | undefined;
+  if (sc.placement !== undefined) {
+    assert(
+      typeof sc.placement === 'string' && sc.placement.length > 0,
+      '"sitecore.placement" must be a non-empty string',
+    );
+    placement = sc.placement;
+  }
+
   return {
     name: m.name,
     description: m.description,
@@ -142,6 +153,7 @@ export function parseManifest(raw: unknown): ComponentManifest {
       rendering: { componentName: rnd.componentName, type: rnd.type },
       placeholders,
       params,
+      placement,
     },
   };
 }
