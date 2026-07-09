@@ -5,7 +5,7 @@ import {
   renderSitecoreInstructions,
   type HeadcoreConfig,
 } from 'headcore-core';
-import { readComponentManifest, readComponentFiles } from '../registry.js';
+import { readComponentManifest, readComponentFiles, resolveComponentNames } from '../registry.js';
 import { resolveCliConfigPath } from '../config-path.js';
 
 export interface AddInput {
@@ -42,18 +42,20 @@ export async function runAdd(input: AddInput, deps?: Partial<AddDeps>): Promise<
   const loadConfig = deps?.loadConfig ?? defaultLoadConfig;
   const config = await loadConfig(resolveCliConfigPath());
 
-  const manifest = readComponentManifest(input.name);
-  const sourceFiles = readComponentFiles(input.name);
+  const outputs: OutputFile[] = [];
+  for (const name of resolveComponentNames(input.name)) {
+    const manifest = readComponentManifest(name);
+    const sourceFiles = readComponentFiles(name);
 
-  // Destination: <componentPath>/<Name>/<file> when componentFolder, else flat.
-  const targetDir = config.componentFolder ? join(config.componentPath, manifest.name) : config.componentPath;
-  const docName = config.componentFolder ? 'SITECORE.md' : `${manifest.name}.SITECORE.md`;
+    // Destination: <componentPath>/<Name>/<file> when componentFolder, else flat.
+    const targetDir = config.componentFolder ? join(config.componentPath, manifest.name) : config.componentPath;
+    const docName = config.componentFolder ? 'SITECORE.md' : `${manifest.name}.SITECORE.md`;
 
-  const outputs: OutputFile[] = sourceFiles.map((f) => ({
-    path: join(targetDir, f.file),
-    contents: applyImportRewrites(f.file, f.contents, config),
-  }));
-  outputs.push({ path: join(targetDir, docName), contents: renderSitecoreInstructions(manifest) });
+    for (const f of sourceFiles) {
+      outputs.push({ path: join(targetDir, f.file), contents: applyImportRewrites(f.file, f.contents, config) });
+    }
+    outputs.push({ path: join(targetDir, docName), contents: renderSitecoreInstructions(manifest) });
+  }
 
   if (input.dryRun) {
     return { written: [], preview: outputs.map((o) => o.path) };
