@@ -137,4 +137,30 @@ describe('runAdd', () => {
     expect(accordion).toContain('renderEach');
     expect(accordion).not.toContain('withDatasourceCheck');
   });
+
+  it('copies Breadcrumbs with rewritten imports in both tsx and data files', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = { ...makeConfig(dir), sitecorePackage: '@acme/sdk' };
+    await runAdd({ name: 'Breadcrumbs', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+
+    const base = join(config.componentPath, 'Breadcrumbs');
+    const tsx = readFileSync(join(base, 'Breadcrumbs.tsx'), 'utf8');
+    const data = readFileSync(join(base, 'Breadcrumbs.data.ts'), 'utf8');
+    expect(tsx).toContain("from '@acme/sdk'");
+    expect(data).toContain("from '@acme/sdk'");
+    expect(data).not.toContain('@sitecore-content-sdk/nextjs');
+    expect(existsSync(join(base, 'Breadcrumbs.module.css'))).toBe(true);
+    expect(existsSync(join(base, 'Breadcrumbs.types.ts'))).toBe(true);
+  });
+
+  it('includes the Placement section in the Breadcrumbs SITECORE.md', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = makeConfig(dir);
+    await runAdd({ name: 'Breadcrumbs', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+
+    const md = readFileSync(join(config.componentPath, 'Breadcrumbs', 'SITECORE.md'), 'utf8');
+    expect(md).toContain('## 5. Placement');
+    expect(md).toContain('partial design');
+    expect(md).toContain('SITECORE_EDGE_CONTEXT_ID');
+  });
 });
