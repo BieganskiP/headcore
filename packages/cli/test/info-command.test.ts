@@ -7,7 +7,7 @@ describe('runInfo', () => {
     expect(out).toContain('Tabs');
     expect(out).toContain('Files:');
     expect(out).toContain('Sitecore setup for Tabs');
-    expect(out).toContain('tabs-1');
+    expect(out).toContain('headcore-tabs');
   });
 
   it('throws when name is missing', () => {

@@ -35,7 +35,8 @@ describe('registry access', () => {
     const files = readComponentFiles('tabs');
     const tsx = files.find((f) => f.file === 'Tabs.tsx');
     expect(tsx).toBeDefined();
-    expect(tsx!.contents).toContain("import { Text, Placeholder }");
+    expect(tsx!.contents).toContain('role="tablist"');
+    expect(tsx!.contents).toContain('renderEach');
   });
 
   it('throws a helpful error for an unknown component', () => {
