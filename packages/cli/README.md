@@ -18,6 +18,12 @@ Content SDK-ready Next.js components from it.
   headcore add <Name>       # copy the component into your project + write SITECORE.md
   ```
 
+  `add` rewrites imports to match your config, pulls in dependencies
+  automatically (`add Tabs` also adds `Tab`), and honors `useDatasourceCheck`.
+  Ships with **Tabs** — an accessible, placeholder-driven tabbed container with
+  unlimited author-managed tabs and full keyboard support — plus its **Tab**
+  companion. `list`/`info` need no config.
+
 - **Introspect** — generate code from a live Sitecore/Experience Edge instance
   (see Commands below).
 
