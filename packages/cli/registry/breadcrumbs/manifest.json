@@ -1,0 +1,14 @@
+{
+  "name": "Breadcrumbs",
+  "description": "A context-driven breadcrumb trail. Placed once in a shared placeholder, it derives the trail from the current page's position in the content tree via an Experience Edge ancestors query fetched server-side. Home first; current page last, unlinked, with aria-current; BreadcrumbList JSON-LD for SEO; renders nothing on the home page.",
+  "files": ["Breadcrumbs.tsx", "Breadcrumbs.data.ts", "Breadcrumbs.types.ts", "Breadcrumbs.module.css"],
+  "dependencies": [],
+  "registryDependencies": [],
+  "sitecore": {
+    "template": { "name": "Breadcrumbs", "fields": [] },
+    "rendering": { "componentName": "Breadcrumbs", "type": "JSON Rendering" },
+    "placeholders": [],
+    "params": [],
+    "placement": "Breadcrumbs is page chrome: add its rendering ONCE to a shared placeholder so it appears on every page. In XM Cloud Pages, add it to a partial design (for example the header); otherwise add it to the page template's standard-values presentation. No datasource is needed. The app must expose SITECORE_EDGE_CONTEXT_ID as a server-side environment variable. Pages Router only: the trail is fetched via getComponentServerProps; App Router users should port Breadcrumbs.data.ts into a React Server Component."
+  }
+}
