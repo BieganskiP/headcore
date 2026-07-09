@@ -147,6 +147,7 @@ describe('runAdd', () => {
     const tsx = readFileSync(join(base, 'Breadcrumbs.tsx'), 'utf8');
     const data = readFileSync(join(base, 'Breadcrumbs.data.ts'), 'utf8');
     expect(tsx).toContain("from '@acme/sdk'");
+    expect(tsx).not.toContain('@sitecore-content-sdk/nextjs');
     expect(data).toContain("from '@acme/sdk'");
     expect(data).not.toContain('@sitecore-content-sdk/nextjs');
     expect(existsSync(join(base, 'Breadcrumbs.module.css'))).toBe(true);
