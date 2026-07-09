@@ -50,6 +50,21 @@ describe('registry access', () => {
     expect(comps.length).toBeGreaterThan(0);
   });
 
+  it('reads the AccordionItem manifest with a title field and dynamic content placeholder', () => {
+    const m = readComponentManifest('accordion-item');
+    expect(m.name).toBe('AccordionItem');
+    expect(m.sitecore.template.fields.map((f) => f.name)).toContain('title');
+    const ph = m.sitecore.placeholders.find((p) => p.key === 'headcore-accordion-item-content');
+    expect(ph?.dynamic).toBe(true);
+  });
+
+  it('every registry component lists files that exist on disk', () => {
+    for (const c of listComponents()) {
+      const files = readComponentFiles(c.name);
+      expect(files.length).toBe(c.files.length);
+    }
+  });
+
   it('resolves a hyphenated folder from the canonical PascalCase name', () => {
     const root = mkdtempSync(join(tmpdir(), 'headcore-registry-'));
     const dir = join(root, 'accordion-item');
