@@ -100,4 +100,41 @@ describe('runAdd', () => {
     const config = makeConfig(dir);
     await expect(runAdd({ name: 'nope', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) })).rejects.toThrow(/nope/);
   });
+
+  it('copies Accordion and its AccordionItem dependency with SITECORE.md files', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = makeConfig(dir);
+    await runAdd({ name: 'Accordion', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+
+    const accordionBase = join(config.componentPath, 'Accordion');
+    const itemBase = join(config.componentPath, 'AccordionItem');
+    expect(existsSync(join(accordionBase, 'Accordion.tsx'))).toBe(true);
+    expect(existsSync(join(accordionBase, 'Accordion.module.css'))).toBe(true);
+    expect(existsSync(join(accordionBase, 'SITECORE.md'))).toBe(true);
+    expect(existsSync(join(itemBase, 'AccordionItem.tsx'))).toBe(true);
+    expect(existsSync(join(itemBase, 'SITECORE.md'))).toBe(true);
+  });
+
+  it('documents the AllowMultiple checkbox param in the Accordion SITECORE.md', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = makeConfig(dir);
+    await runAdd({ name: 'Accordion', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+
+    const md = readFileSync(join(config.componentPath, 'Accordion', 'SITECORE.md'), 'utf8');
+    expect(md).toContain('AllowMultiple (Checkbox) — Allow multiple panels to be open at once (default: one at a time).');
+  });
+
+  it('strips withDatasourceCheck from AccordionItem but leaves Accordion untouched when disabled', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = { ...makeConfig(dir), useDatasourceCheck: false };
+    await runAdd({ name: 'Accordion', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+
+    const item = readFileSync(join(config.componentPath, 'AccordionItem', 'AccordionItem.tsx'), 'utf8');
+    expect(item).not.toContain('withDatasourceCheck');
+    expect(item).toContain('export default AccordionItem;');
+
+    const accordion = readFileSync(join(config.componentPath, 'Accordion', 'Accordion.tsx'), 'utf8');
+    expect(accordion).toContain('renderEach');
+    expect(accordion).not.toContain('withDatasourceCheck');
+  });
 });
