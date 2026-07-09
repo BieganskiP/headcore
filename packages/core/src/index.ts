@@ -31,5 +31,6 @@ export type {
   SitecoreTemplate,
   SitecoreRendering,
   SitecorePlaceholder,
+  SitecoreParam,
 } from './registry/manifest.js';
 export { renderSitecoreInstructions } from './registry/instructions.js';

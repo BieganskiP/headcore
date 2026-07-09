@@ -21,7 +21,7 @@ describe('parseManifest', () => {
     expect(m.name).toBe('Tabs');
     expect(m.files).toEqual(['Tabs.tsx', 'Tabs.types.ts']);
     expect(m.sitecore.placeholders[0].key).toBe('tabs-1');
-    expect(m.sitecore.params).toEqual(['Tab1Label']);
+    expect(m.sitecore.params).toEqual([{ name: 'Tab1Label' }]);
   });
 
   it('defaults optional array fields when omitted', () => {
@@ -43,5 +43,32 @@ describe('parseManifest', () => {
   it('throws when the sitecore section is missing', () => {
     const { sitecore, ...rest } = valid;
     expect(() => parseManifest(rest)).toThrow(/sitecore/i);
+  });
+
+  it('accepts object params with type and description', () => {
+    const m = parseManifest({
+      ...valid,
+      sitecore: {
+        ...valid.sitecore,
+        params: [{ name: 'AllowMultiple', type: 'Checkbox', description: 'Allow many open panels.' }],
+      },
+    });
+    expect(m.sitecore.params).toEqual([
+      { name: 'AllowMultiple', type: 'Checkbox', description: 'Allow many open panels.' },
+    ]);
+  });
+
+  it('accepts mixed string and object params', () => {
+    const m = parseManifest({
+      ...valid,
+      sitecore: { ...valid.sitecore, params: ['Plain', { name: 'Typed', type: 'Checkbox' }] },
+    });
+    expect(m.sitecore.params).toEqual([{ name: 'Plain' }, { name: 'Typed', type: 'Checkbox' }]);
+  });
+
+  it('throws for a param object without a name', () => {
+    expect(() =>
+      parseManifest({ ...valid, sitecore: { ...valid.sitecore, params: [{ type: 'Checkbox' }] } }),
+    ).toThrow(/param/i);
   });
 });
