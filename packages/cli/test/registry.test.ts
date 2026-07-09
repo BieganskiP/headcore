@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { listComponents, readComponentManifest, readComponentFiles } from '../src/registry.js';
 
 // packages/cli/registry, resolved relative to this test file (cwd-independent).
@@ -46,5 +48,29 @@ describe('registry access', () => {
   it('resolves manifests from an explicit root', () => {
     const comps = listComponents(REGISTRY_ROOT);
     expect(comps.length).toBeGreaterThan(0);
+  });
+
+  it('resolves a hyphenated folder from the canonical PascalCase name', () => {
+    const root = mkdtempSync(join(tmpdir(), 'headcore-registry-'));
+    const dir = join(root, 'accordion-item');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(
+      join(dir, 'manifest.json'),
+      JSON.stringify({
+        name: 'AccordionItem',
+        description: 'x',
+        files: ['AccordionItem.tsx'],
+        sitecore: {
+          template: { name: 'AccordionItem', fields: [] },
+          rendering: { componentName: 'AccordionItem', type: 'JSON Rendering' },
+          placeholders: [],
+        },
+      }),
+      'utf8',
+    );
+    writeFileSync(join(dir, 'AccordionItem.tsx'), 'export default null;', 'utf8');
+
+    expect(readComponentManifest('AccordionItem', root).name).toBe('AccordionItem');
+    expect(readComponentFiles('AccordionItem', root)[0].file).toBe('AccordionItem.tsx');
   });
 });

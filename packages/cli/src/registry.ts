@@ -17,6 +17,11 @@ function manifestPath(root: string, dir: string): string {
   return join(root, dir, 'manifest.json');
 }
 
+/** Fold case and hyphens so canonical names match folder names (AccordionItem ~ accordion-item). */
+function normalizeName(s: string): string {
+  return s.toLowerCase().replace(/-/g, '');
+}
+
 /** List every component in the registry (by reading each folder's manifest). */
 export function listComponents(root: string = defaultRegistryRoot()): ComponentManifest[] {
   if (!existsSync(root)) return [];
@@ -29,7 +34,7 @@ export function listComponents(root: string = defaultRegistryRoot()): ComponentM
 export function readComponentManifest(name: string, root: string = defaultRegistryRoot()): ComponentManifest {
   const dir = existsSync(manifestPath(root, name))
     ? name
-    : readdirSync(root).find((e) => e.toLowerCase() === name.toLowerCase());
+    : readdirSync(root).find((e) => normalizeName(e) === normalizeName(name));
   if (!dir || !existsSync(manifestPath(root, dir))) {
     throw new Error(`Unknown component "${name}". Run \`headcore list\` to see available components.`);
   }
@@ -39,7 +44,7 @@ export function readComponentManifest(name: string, root: string = defaultRegist
 /** Read a component's source files (contents) as declared in its manifest. */
 export function readComponentFiles(name: string, root: string = defaultRegistryRoot()): ComponentFile[] {
   const manifest = readComponentManifest(name, root);
-  const dir = readdirSync(root).find((e) => e.toLowerCase() === name.toLowerCase()) ?? name;
+  const dir = readdirSync(root).find((e) => normalizeName(e) === normalizeName(name)) ?? name;
   return manifest.files.map((file) => ({
     file,
     contents: readFileSync(join(root, dir, file), 'utf8'),
