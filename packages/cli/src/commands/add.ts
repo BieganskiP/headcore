@@ -31,9 +31,23 @@ interface OutputFile {
 /** Rewrite the two project-specific import specifiers to match the user's config. */
 function applyImportRewrites(file: string, contents: string, config: HeadcoreConfig): string {
   if (!file.endsWith('.tsx') && !file.endsWith('.ts')) return contents;
-  return contents
+  let out = contents
     .split("'@sitecore-content-sdk/nextjs'").join(`'${config.sitecorePackage}'`)
     .split("'lib/component-props'").join(`'${config.componentPropsImport}'`);
+  if (!config.useDatasourceCheck) out = stripDatasourceCheck(out);
+  return out;
+}
+
+/**
+ * When a project disables `useDatasourceCheck`, remove the withDatasourceCheck HOC
+ * wrapper and its import — mirroring what the codegen emits with the flag off.
+ */
+function stripDatasourceCheck(contents: string): string {
+  return contents
+    // `withDatasourceCheck()<XProps>(X)` -> `X` (covers default and named exports)
+    .replace(/withDatasourceCheck\(\)<[^>]+>\(([^)]+)\)/g, '$1')
+    // drop the now-unused import (registry lists it after another SDK import)
+    .split(', withDatasourceCheck').join('');
 }
 
 export async function runAdd(input: AddInput, deps?: Partial<AddDeps>): Promise<AddResult> {

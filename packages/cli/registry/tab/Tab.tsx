@@ -1,4 +1,4 @@
-import { Placeholder } from '@sitecore-content-sdk/nextjs';
+import { Placeholder, withDatasourceCheck } from '@sitecore-content-sdk/nextjs';
 import { TabProps } from './Tab.types';
 
 const Tab = ({ rendering }: TabProps) => (
@@ -7,4 +7,4 @@ const Tab = ({ rendering }: TabProps) => (
   </div>
 );
 
-export default Tab;
+export default withDatasourceCheck()<TabProps>(Tab);

@@ -1,5 +1,12 @@
-import { ComponentRendering } from '@sitecore-content-sdk/nextjs';
+import { Field } from '@sitecore-content-sdk/nextjs';
+import { ComponentProps } from 'lib/component-props';
 
-export interface TabProps {
-  rendering: ComponentRendering;
-}
+type TabFields = {
+  title: Field<string>;
+};
+
+type TabProps = ComponentProps & {
+  fields: TabFields;
+};
+
+export type { TabFields, TabProps };

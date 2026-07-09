@@ -47,6 +47,37 @@ describe('runAdd', () => {
     expect(tsx).not.toContain("from '@sitecore-content-sdk/nextjs'");
   });
 
+  it('guards a datasourced component with withDatasourceCheck by default', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = makeConfig(dir);
+    await runAdd({ name: 'Tabs', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+
+    const tab = readFileSync(join(config.componentPath, 'Tab', 'Tab.tsx'), 'utf8');
+    expect(tab).toContain('withDatasourceCheck');
+    expect(tab).toContain('export default withDatasourceCheck()<TabProps>(Tab);');
+  });
+
+  it('strips withDatasourceCheck when useDatasourceCheck is disabled', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = { ...makeConfig(dir), useDatasourceCheck: false };
+    await runAdd({ name: 'Tabs', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+
+    const tab = readFileSync(join(config.componentPath, 'Tab', 'Tab.tsx'), 'utf8');
+    expect(tab).not.toContain('withDatasourceCheck');
+    expect(tab).toContain('export default Tab;');
+  });
+
+  it('rewrites the ComponentProps import in the types file', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = makeConfig(dir);
+    await runAdd({ name: 'Tabs', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+
+    const types = readFileSync(join(config.componentPath, 'Tab', 'Tab.types.ts'), 'utf8');
+    expect(types).toContain('ComponentProps');
+    expect(types).toContain("from 'src/lib/component-props'");
+    expect(types).not.toContain("from 'lib/component-props'");
+  });
+
   it('dry-run writes nothing', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
     const config = makeConfig(dir);

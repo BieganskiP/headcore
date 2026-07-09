@@ -1,5 +1,5 @@
-import { ComponentRendering } from '@sitecore-content-sdk/nextjs';
+import { ComponentProps } from 'lib/component-props';
 
-export interface TabsProps {
-  rendering: ComponentRendering;
-}
+type TabsProps = ComponentProps;
+
+export type { TabsProps };
