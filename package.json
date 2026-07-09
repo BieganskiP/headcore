@@ -1,6 +1,6 @@
 {
-  "name": "headcore",
-  "private": false,
+  "name": "headcore-monorepo",
+  "private": true,
   "type": "module",
   "workspaces": [
     "packages/*"
