@@ -4,17 +4,15 @@ import { useState, useRef } from 'react';
 import type { KeyboardEvent } from 'react';
 import {
   Placeholder, Text, useSitecore,
-  ComponentRendering, HtmlElementRendering, Field, Item,
+  ComponentRendering, Field, Item,
 } from '@sitecore-content-sdk/nextjs';
 import { TabsProps } from './Tabs.types';
 import styles from './Tabs.module.css';
 
 const TABS_PLACEHOLDER = 'headcore-tabs';
 
-function isComponentRendering(
-  r: ComponentRendering | HtmlElementRendering,
-): r is ComponentRendering {
-  return 'fields' in r;
+function isComponentRendering(r: unknown): r is ComponentRendering {
+  return typeof r === 'object' && r !== null && 'fields' in r;
 }
 
 function isTextField(field: Field | Item | Item[] | undefined): field is Field<string> {

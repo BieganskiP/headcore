@@ -65,6 +65,14 @@ describe('registry access', () => {
     }
   });
 
+  it('never references HtmlElementRendering (JSS-only type, not in the Content SDK)', () => {
+    for (const c of listComponents()) {
+      for (const f of readComponentFiles(c.name)) {
+        expect(f.contents, `${c.name}/${f.file}`).not.toContain('HtmlElementRendering');
+      }
+    }
+  });
+
   it('reads the Accordion manifest with the AllowMultiple checkbox param', () => {
     const m = readComponentManifest('accordion');
     expect(m.name).toBe('Accordion');
