@@ -93,6 +93,28 @@ describe('registry access', () => {
     expect(resolveComponentNames('Accordion')).toEqual(['AccordionItem', 'Accordion']);
   });
 
+  it('reads the Breadcrumbs manifest as a context component with placement guidance', () => {
+    const m = readComponentManifest('breadcrumbs');
+    expect(m.name).toBe('Breadcrumbs');
+    expect(m.registryDependencies).toEqual([]);
+    expect(m.sitecore.template.fields).toEqual([]);
+    expect(m.sitecore.placeholders).toEqual([]);
+    expect(m.sitecore.params).toEqual([]);
+    expect(m.sitecore.placement).toContain('partial design');
+  });
+
+  it('ships Breadcrumbs with server-side data fetching and SEO markup', () => {
+    const files = readComponentFiles('breadcrumbs');
+    const tsx = files.find((f) => f.file === 'Breadcrumbs.tsx')!.contents;
+    const data = files.find((f) => f.file === 'Breadcrumbs.data.ts')!.contents;
+    expect(tsx).toContain('aria-label="Breadcrumb"');
+    expect(tsx).toContain('aria-current="page"');
+    expect(tsx).toContain('application/ld+json');
+    expect(data).toContain('export const getComponentServerProps');
+    expect(data).toContain('SITECORE_EDGE_CONTEXT_ID');
+    expect(data).toContain('ancestors(hasLayout: true)');
+  });
+
   it('resolves a hyphenated folder from the canonical PascalCase name', () => {
     const root = mkdtempSync(join(tmpdir(), 'headcore-registry-'));
     const dir = join(root, 'accordion-item');

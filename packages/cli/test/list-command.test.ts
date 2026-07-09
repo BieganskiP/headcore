@@ -13,4 +13,10 @@ describe('runList', () => {
     expect(out).toContain('Accordion');
     expect(out).toContain('accordion');
   });
+
+  it('lists Breadcrumbs with its description', () => {
+    const out = runList();
+    expect(out).toContain('Breadcrumbs');
+    expect(out).toContain('context-driven breadcrumb trail');
+  });
 });

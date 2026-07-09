@@ -57,6 +57,13 @@ overwrite existing files.
 - **AccordionItem** — a single section within `Accordion`. Supplies the section's
   `title` and exposes its own content placeholder for arbitrary renderings. Guarded
   with `withDatasourceCheck`.
+- **Breadcrumbs** — a context-driven breadcrumb trail. Add it once to a shared
+  placeholder (an XM Cloud Pages partial design, or the page template's standard
+  values) and it derives the trail from the current page's ancestors via an
+  Experience Edge query fetched server-side (`getComponentServerProps`, Pages
+  Router). Home first; current page unlinked with `aria-current`; emits
+  schema.org BreadcrumbList JSON-LD; renders nothing on the home page. Needs
+  `SITECORE_EDGE_CONTEXT_ID` in the app's server-side environment.
 
 ## Install
 

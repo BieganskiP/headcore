@@ -2,7 +2,7 @@ import type { ComponentManifest } from './manifest.js';
 
 /** Render Markdown instructions for modeling a component's Sitecore side. */
 export function renderSitecoreInstructions(m: ComponentManifest): string {
-  const { template, rendering, placeholders, params } = m.sitecore;
+  const { template, rendering, placeholders, params, placement } = m.sitecore;
 
   const fieldLines =
     template.fields.length > 0
@@ -28,6 +28,13 @@ export function renderSitecoreInstructions(m: ComponentManifest): string {
           .join('\n')
       : '   - None.';
 
+  const placementSection = placement
+    ? `
+## 5. Placement
+${placement}
+`
+    : '';
+
   return `# Sitecore setup for ${m.name}
 
 ${m.description}
@@ -46,5 +53,5 @@ ${placeholderLines}
 ## 4. Rendering parameters
 Add these parameters to the rendering's parameters template:
 ${paramLines}
-`;
+${placementSection}`;
 }
