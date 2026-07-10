@@ -1,0 +1,15 @@
+{
+  "name": "Carousel",
+  "description": "An accessible, placeholder-driven carousel / media gallery. Authors add any number of CarouselSlide components into its placeholder; each slide supplies a title (its accessible name) and its own content placeholder for arbitrary renderings. One slide shows at a time with previous/next controls and dot indicators; slides wrap around; no autoplay. The Sitecore editor reveals all slides stacked so each is editable.",
+  "files": ["Carousel.tsx", "Carousel.types.ts"],
+  "dependencies": [],
+  "registryDependencies": ["carousel-slide"],
+  "sitecore": {
+    "template": { "name": "Carousel", "fields": [] },
+    "rendering": { "componentName": "Carousel", "type": "JSON Rendering" },
+    "placeholders": [
+      { "key": "headcore-carousel", "dynamic": false, "allowedRenderings": ["CarouselSlide"] }
+    ],
+    "params": []
+  }
+}

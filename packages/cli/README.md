@@ -20,10 +20,11 @@ Content SDK-ready Next.js components from it.
 
   `add` rewrites imports to match your config, pulls in dependencies
   automatically (`add Tabs` also adds `Tab`), and honors `useDatasourceCheck`.
-  Ships with **Tabs** and **Accordion** — accessible, placeholder-driven
-  containers with unlimited author-managed items and full keyboard support —
-  plus their **Tab** / **AccordionItem** companions, and **Breadcrumbs**, a
-  context-driven trail for shared page chrome (Edge ancestors query, JSON-LD).
+  Ships with **Tabs**, **Accordion**, and **Carousel** — accessible,
+  placeholder-driven containers with unlimited author-managed items — plus
+  their **Tab** / **AccordionItem** / **CarouselSlide** companions, and
+  **Breadcrumbs**, a context-driven trail for shared page chrome (Edge
+  ancestors query, JSON-LD).
   `list`/`info` need no config.
 
 - **Introspect** — generate code from a live Sitecore/Experience Edge instance

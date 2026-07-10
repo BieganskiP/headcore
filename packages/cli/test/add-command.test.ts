@@ -138,6 +138,34 @@ describe('runAdd', () => {
     expect(accordion).not.toContain('withDatasourceCheck');
   });
 
+  it('copies Carousel and its CarouselSlide dependency with SITECORE.md files', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = makeConfig(dir);
+    await runAdd({ name: 'Carousel', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+
+    const carouselBase = join(config.componentPath, 'Carousel');
+    const slideBase = join(config.componentPath, 'CarouselSlide');
+    expect(existsSync(join(carouselBase, 'Carousel.tsx'))).toBe(true);
+    expect(existsSync(join(carouselBase, 'SITECORE.md'))).toBe(true);
+    expect(existsSync(join(slideBase, 'CarouselSlide.tsx'))).toBe(true);
+    expect(existsSync(join(slideBase, 'SITECORE.md'))).toBe(true);
+  });
+
+  it('strips withDatasourceCheck from CarouselSlide but leaves Carousel untouched when disabled', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = { ...makeConfig(dir), useDatasourceCheck: false };
+    await runAdd({ name: 'Carousel', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+
+    const slide = readFileSync(join(config.componentPath, 'CarouselSlide', 'CarouselSlide.tsx'), 'utf8');
+    expect(slide).not.toContain('withDatasourceCheck');
+    expect(slide).toContain('export default CarouselSlide;');
+
+    const carousel = readFileSync(join(config.componentPath, 'Carousel', 'Carousel.tsx'), 'utf8');
+    expect(carousel).toContain('renderEach');
+    expect(carousel).not.toContain('withDatasourceCheck');
+    expect(carousel).not.toContain('module.css');
+  });
+
   it('copies Breadcrumbs with rewritten imports in both tsx and data files', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
     const config = { ...makeConfig(dir), sitecorePackage: '@acme/sdk' };

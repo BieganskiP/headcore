@@ -18,9 +18,11 @@ export interface InitResult {
 const CONFIG_FILENAME = 'headcore.config.ts';
 
 /** Keep in sync with headcore.config.example.ts at the repo root. */
+// A named const (not an anonymous `export default {}`) so the generated file
+// passes the `import/no-anonymous-default-export` rule in Next.js ESLint setups.
 const CONFIG_TEMPLATE = `// headcore config. Secrets come from env vars (.env.local and .env next to
 // this file are loaded automatically; shell env wins).
-export default {
+const headcoreConfig = {
   edge: {
     // Modern XM Cloud (Content SDK) auth — the Edge Context ID:
     contextId: process.env.SITECORE_EDGE_CONTEXT_ID, // or reuse NEXT_PUBLIC_SITECORE_EDGE_CONTEXT_ID from your Content SDK project
@@ -41,6 +43,8 @@ export default {
   i18nPath: 'src/lib/i18n', // where dictionary-keys.ts and use-typed-t.ts are written
   i18nPackage: 'next-localization', // provides useI18n() for the typed t wrapper
 };
+
+export default headcoreConfig;
 `;
 
 export function runInit(input: InitInput): InitResult {

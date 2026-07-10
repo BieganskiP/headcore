@@ -1,0 +1,15 @@
+{
+  "name": "CarouselSlide",
+  "description": "A single slide within a Carousel component. Provides the slide's title (used as its accessible name) and a placeholder for the slide's own content.",
+  "files": ["CarouselSlide.tsx", "CarouselSlide.types.ts"],
+  "dependencies": [],
+  "registryDependencies": [],
+  "sitecore": {
+    "template": { "name": "CarouselSlide", "fields": [{ "name": "title", "type": "Single-Line Text" }] },
+    "rendering": { "componentName": "CarouselSlide", "type": "JSON Rendering" },
+    "placeholders": [
+      { "key": "headcore-carousel-slide-content", "dynamic": true, "allowedRenderings": ["*"] }
+    ],
+    "params": []
+  }
+}

@@ -22,7 +22,11 @@ describe('runInit', () => {
     expect(result.path).toBe(join(dir, 'headcore.config.ts'));
     expect(result.written).toBe(true);
     const contents = readFileSync(result.path, 'utf8');
-    expect(contents).toContain('export default {');
+    // Named const + `export default headcoreConfig` keeps Next.js ESLint's
+    // import/no-anonymous-default-export rule happy in consuming projects.
+    expect(contents).toContain('const headcoreConfig = {');
+    expect(contents).toContain('export default headcoreConfig;');
+    expect(contents).not.toContain('export default {');
     expect(contents).toContain('process.env.SITECORE_EDGE_CONTEXT_ID');
     expect(contents).toContain("componentPath: 'src/components/sitecore'");
   });
@@ -48,7 +52,7 @@ describe('runInit', () => {
 
     const result = runInit({ dryRun: false, force: true, cwd: dir });
     expect(result.written).toBe(true);
-    expect(readFileSync(path, 'utf8')).toContain('export default {');
+    expect(readFileSync(path, 'utf8')).toContain('const headcoreConfig = {');
   });
 
   it('produces a config that passes loadConfig once the context ID env var is set', async () => {
@@ -69,7 +73,8 @@ describe('runInit', () => {
 
     const body = (file: string) => {
       const contents = readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
-      return contents.slice(contents.indexOf('export default'));
+      // Compare from the config object onward; only the header comment may differ.
+      return contents.slice(contents.indexOf('const headcoreConfig'));
     };
     const example = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'headcore.config.example.ts');
     expect(body(path)).toBe(body(example));

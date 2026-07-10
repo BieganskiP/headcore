@@ -57,6 +57,15 @@ overwrite existing files.
 - **AccordionItem** — a single section within `Accordion`. Supplies the section's
   `title` and exposes its own content placeholder for arbitrary renderings. Guarded
   with `withDatasourceCheck`.
+- **Carousel** — an accessible, placeholder-driven carousel / media gallery.
+  Authors add any number of `CarouselSlide` components into its placeholder; one
+  slide shows at a time with previous/next controls and dot indicators, wrapping
+  around at the ends. No autoplay. In the Sitecore editor, all slides are
+  revealed stacked so each is editable. Depends on `CarouselSlide` (added
+  automatically).
+- **CarouselSlide** — a single slide within `Carousel`. Supplies the slide's
+  `title` (used as its accessible name) and exposes its own content placeholder
+  for arbitrary renderings. Guarded with `withDatasourceCheck`.
 - **Breadcrumbs** — a context-driven breadcrumb trail. Add it once to a shared
   placeholder (an XM Cloud Pages partial design, or the page template's standard
   values) and it derives the trail from the current page's ancestors via an
