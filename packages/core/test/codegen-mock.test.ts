@@ -25,6 +25,35 @@ describe('renderMockFile', () => {
     expect(parsed.fields.heading.value).toBe('About');
     expect(parsed.params.variant).toBe('dark');
   });
+
+  it('includes nested placeholder nodes with componentName when present', () => {
+    const container: RenderingNode = {
+      componentName: 'Carousel',
+      fields: {},
+      params: {},
+      placeholders: {
+        'headcore-carousel': [
+          {
+            componentName: 'CarouselSlide',
+            fields: { title: { value: 'First slide' } },
+            params: {},
+            placeholders: {},
+          },
+        ],
+      },
+    };
+    const parsed = JSON.parse(renderMockFile(container));
+    const slide = parsed.placeholders['headcore-carousel'][0];
+    expect(slide.componentName).toBe('CarouselSlide');
+    expect(slide.fields.title.value).toBe('First slide');
+    expect(slide.placeholders).toBeUndefined(); // empty child placeholders omitted
+  });
+
+  it('omits the placeholders key when the node has none', () => {
+    const parsed = JSON.parse(renderMockFile(node));
+    expect(parsed.placeholders).toBeUndefined();
+    expect(Object.keys(parsed)).toEqual(['fields', 'params']);
+  });
 });
 
 describe('generateFiles', () => {
