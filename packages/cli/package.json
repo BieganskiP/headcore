@@ -1,6 +1,6 @@
 {
   "name": "headcore",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "A component kit for headless Sitecore + Next.js: copy-in components, an introspection CLI, and manifest-driven Sitecore modeling docs.",
   "type": "module",
   "bin": {
