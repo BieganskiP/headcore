@@ -16,6 +16,8 @@ export { normalizeVariants } from './codegen/variants.js';
 export { renderTypesFile } from './codegen/types-file.js';
 export { renderComponentFile } from './codegen/component-file.js';
 export { renderMockFile } from './codegen/mock-file.js';
+export { renderStoryFile } from './codegen/story-file.js';
+export type { StoryMockNode, StoryFileConfig } from './codegen/story-file.js';
 export { DICTIONARY_QUERY } from './edge/query.js';
 export type { DictionaryEntry } from './edge/client.js';
 export { buildDictionary, type DictionaryBuildResult } from './dictionary/build.js';
