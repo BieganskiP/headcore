@@ -146,4 +146,68 @@ describe('loadConfig', () => {
       expect(cfg.edge.contextId).toBe('from-shell');
     });
   });
+
+  describe('storybook section', () => {
+    it('defaults to disabled with standard prefix and decorator path when absent', async () => {
+      const p = writeConfig(dir, `export default {
+      edge: { contextId: 'ctx', site: 's', defaultLanguage: 'en' },${BASE}
+    };`);
+      const cfg = await loadConfig(p);
+      expect(cfg.storybook).toEqual({
+        enabled: false,
+        titlePrefix: 'Sitecore',
+        decoratorPath: '.storybook/sitecore-decorator.tsx',
+      });
+    });
+
+    it('accepts a full storybook section', async () => {
+      const p = writeConfig(dir, `export default {
+      edge: { contextId: 'ctx', site: 's', defaultLanguage: 'en' },${BASE}
+      storybook: { enabled: true, titlePrefix: '', decoratorPath: 'src/stories/sitecore.tsx' },
+    };`);
+      const cfg = await loadConfig(p);
+      expect(cfg.storybook).toEqual({
+        enabled: true,
+        titlePrefix: '',
+        decoratorPath: 'src/stories/sitecore.tsx',
+      });
+    });
+
+    it('fills defaults for omitted storybook fields', async () => {
+      const p = writeConfig(dir, `export default {
+      edge: { contextId: 'ctx', site: 's', defaultLanguage: 'en' },${BASE}
+      storybook: { enabled: true },
+    };`);
+      const cfg = await loadConfig(p);
+      expect(cfg.storybook).toEqual({
+        enabled: true,
+        titlePrefix: 'Sitecore',
+        decoratorPath: '.storybook/sitecore-decorator.tsx',
+      });
+    });
+
+    it('throws when storybook is not an object', async () => {
+      const p = writeConfig(dir, `export default {
+      edge: { contextId: 'ctx', site: 's', defaultLanguage: 'en' },${BASE}
+      storybook: true,
+    };`);
+      await expect(loadConfig(p)).rejects.toThrow(/storybook.*object/i);
+    });
+
+    it('throws when storybook.enabled is not a boolean', async () => {
+      const p = writeConfig(dir, `export default {
+      edge: { contextId: 'ctx', site: 's', defaultLanguage: 'en' },${BASE}
+      storybook: { enabled: 'yes' },
+    };`);
+      await expect(loadConfig(p)).rejects.toThrow(/storybook\.enabled/);
+    });
+
+    it('throws when storybook.decoratorPath is empty', async () => {
+      const p = writeConfig(dir, `export default {
+      edge: { contextId: 'ctx', site: 's', defaultLanguage: 'en' },${BASE}
+      storybook: { enabled: true, decoratorPath: '' },
+    };`);
+      await expect(loadConfig(p)).rejects.toThrow(/storybook\.decoratorPath/);
+    });
+  });
 });

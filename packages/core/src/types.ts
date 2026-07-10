@@ -11,6 +11,15 @@ export interface EdgeConfig {
 
 export type StylingMode = 'css' | 'tailwind' | 'none';
 
+export interface StorybookConfig {
+  /** Emit a `<Name>.stories.tsx` next to each component (implies mock emission). */
+  enabled: boolean;
+  /** Story title prefix: stories appear as `<titlePrefix>/<Name>` ('' for bare names). */
+  titlePrefix: string;
+  /** Project-relative path of the shared Storybook decorator file (written once, never overwritten). */
+  decoratorPath: string;
+}
+
 export interface HeadcoreConfig {
   edge: EdgeConfig;
   componentPath: string;
@@ -27,6 +36,8 @@ export interface HeadcoreConfig {
   i18nPath: string;
   /** Package that provides `useI18n` for the generated typed t wrapper. */
   i18nPackage: string;
+  /** Storybook story generation. Optional in user config; loadConfig always fills defaults. */
+  storybook?: StorybookConfig;
 }
 
 /** A single field's raw value as returned in layout JSON. */

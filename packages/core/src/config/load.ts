@@ -2,7 +2,8 @@ import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { config as loadEnvFiles } from 'dotenv';
-import type { HeadcoreConfig } from '../types.js';
+import { resolveStorybook } from './storybook.js';
+import type { HeadcoreConfig, StorybookConfig } from '../types.js';
 
 const REQUIRED_STRING_FIELDS: Array<keyof HeadcoreConfig> = [
   'componentPath',
@@ -59,6 +60,23 @@ export async function loadConfig(path: string): Promise<HeadcoreConfig> {
     `Config "styling" must be 'css', 'tailwind', or 'none' (got "${styling}")`,
   );
 
+  const sb = loaded.storybook as Partial<StorybookConfig> | undefined;
+  if (sb !== undefined) {
+    assert(typeof sb === 'object' && sb !== null, 'Config "storybook" must be an object');
+    if (sb.enabled !== undefined) {
+      assert(typeof sb.enabled === 'boolean', 'Config "storybook.enabled" must be a boolean');
+    }
+    if (sb.titlePrefix !== undefined) {
+      assert(typeof sb.titlePrefix === 'string', 'Config "storybook.titlePrefix" must be a string');
+    }
+    if (sb.decoratorPath !== undefined) {
+      assert(
+        typeof sb.decoratorPath === 'string' && sb.decoratorPath.length > 0,
+        'Config "storybook.decoratorPath" must be a non-empty string',
+      );
+    }
+  }
+
   return {
     edge: loaded.edge,
     componentPath: loaded.componentPath!,
@@ -71,5 +89,6 @@ export async function loadConfig(path: string): Promise<HeadcoreConfig> {
     fieldTypeOverrides: loaded.fieldTypeOverrides ?? {},
     i18nPath: loaded.i18nPath ?? 'src/lib/i18n',
     i18nPackage: loaded.i18nPackage ?? 'next-localization',
+    storybook: resolveStorybook(loaded),
   } as HeadcoreConfig;
 }
