@@ -1,7 +1,7 @@
 {
   "name": "Breadcrumbs",
   "description": "A context-driven breadcrumb trail. Placed once in a shared placeholder, it derives the trail from the current page's position in the content tree via an Experience Edge ancestors query fetched server-side. Home first; current page last, unlinked, with aria-current; BreadcrumbList JSON-LD for SEO; renders nothing on the home page.",
-  "files": ["Breadcrumbs.tsx", "Breadcrumbs.data.ts", "Breadcrumbs.types.ts", "Breadcrumbs.module.css"],
+  "files": ["Breadcrumbs.tsx", "Breadcrumbs.data.ts", "Breadcrumbs.types.ts"],
   "dependencies": [],
   "registryDependencies": [],
   "sitecore": {

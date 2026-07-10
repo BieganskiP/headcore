@@ -7,9 +7,11 @@ import {
   ComponentRendering, Field, Item,
 } from '@sitecore-content-sdk/nextjs';
 import { TabsProps } from './Tabs.types';
-import styles from './Tabs.module.css';
 
 const TABS_PLACEHOLDER = 'headcore-tabs';
+
+const TAB_CLASS =
+  'cursor-pointer border-b-2 px-4 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600';
 
 function isComponentRendering(r: unknown): r is ComponentRendering {
   return typeof r === 'object' && r !== null && 'fields' in r;
@@ -56,8 +58,8 @@ const Tabs = ({ rendering }: TabsProps) => {
   };
 
   return (
-    <div className={styles.root}>
-      <div role="tablist" aria-orientation="horizontal" className={styles.tablist}>
+    <div className="flex flex-col gap-4">
+      <div role="tablist" aria-orientation="horizontal" className="flex gap-2 border-b border-slate-200">
         {tabs.map((tab, i) => {
           const selected = active === i;
           return (
@@ -72,7 +74,11 @@ const Tabs = ({ rendering }: TabsProps) => {
               aria-selected={selected}
               aria-controls={`panel-${tab.uid}`}
               tabIndex={selected ? 0 : -1}
-              className={selected ? styles.tabActive : styles.tab}
+              className={
+                selected
+                  ? `${TAB_CLASS} border-current font-semibold`
+                  : `${TAB_CLASS} border-transparent`
+              }
               onClick={() => setActive(i)}
               onKeyDown={onKeyDown}
             >
@@ -94,7 +100,7 @@ const Tabs = ({ rendering }: TabsProps) => {
               role="tabpanel"
               aria-labelledby={`tab-${tab?.uid}`}
               hidden={!(isEditing || active === i)}
-              className={styles.panel}
+              className="py-4"
             >
               {component}
             </div>

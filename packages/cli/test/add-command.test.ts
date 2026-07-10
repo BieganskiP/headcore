@@ -109,7 +109,7 @@ describe('runAdd', () => {
     const accordionBase = join(config.componentPath, 'Accordion');
     const itemBase = join(config.componentPath, 'AccordionItem');
     expect(existsSync(join(accordionBase, 'Accordion.tsx'))).toBe(true);
-    expect(existsSync(join(accordionBase, 'Accordion.module.css'))).toBe(true);
+    expect(existsSync(join(accordionBase, 'Accordion.module.css'))).toBe(false);
     expect(existsSync(join(accordionBase, 'SITECORE.md'))).toBe(true);
     expect(existsSync(join(itemBase, 'AccordionItem.tsx'))).toBe(true);
     expect(existsSync(join(itemBase, 'SITECORE.md'))).toBe(true);
@@ -150,7 +150,8 @@ describe('runAdd', () => {
     expect(tsx).not.toContain('@sitecore-content-sdk/nextjs');
     expect(data).toContain("from '@acme/sdk'");
     expect(data).not.toContain('@sitecore-content-sdk/nextjs');
-    expect(existsSync(join(base, 'Breadcrumbs.module.css'))).toBe(true);
+    expect(tsx).not.toContain('module.css');
+    expect(existsSync(join(base, 'Breadcrumbs.module.css'))).toBe(false);
     expect(existsSync(join(base, 'Breadcrumbs.types.ts'))).toBe(true);
   });
 

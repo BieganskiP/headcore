@@ -1,7 +1,7 @@
 {
   "name": "Tabs",
   "description": "An accessible, placeholder-driven tabbed container. Authors add any number of Tab components into its placeholder; each Tab supplies a title and its own content placeholder. Full keyboard support (arrow keys, Home/End) and reveals all panels in the Sitecore editor.",
-  "files": ["Tabs.tsx", "Tabs.types.ts", "Tabs.module.css"],
+  "files": ["Tabs.tsx", "Tabs.types.ts"],
   "dependencies": [],
   "registryDependencies": ["tab"],
   "sitecore": {

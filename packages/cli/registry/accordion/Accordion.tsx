@@ -7,7 +7,6 @@ import {
   ComponentRendering, Field, Item,
 } from '@sitecore-content-sdk/nextjs';
 import { AccordionProps } from './Accordion.types';
-import styles from './Accordion.module.css';
 
 const ACCORDION_PLACEHOLDER = 'headcore-accordion';
 
@@ -62,7 +61,7 @@ const Accordion = ({ rendering, params }: AccordionProps) => {
   };
 
   return (
-    <div className={styles.root}>
+    <div className="flex flex-col">
       <Placeholder
         name={ACCORDION_PLACEHOLDER}
         rendering={rendering}
@@ -72,8 +71,8 @@ const Accordion = ({ rendering, params }: AccordionProps) => {
           const title = item?.fields?.title;
           const open = isEditing || openSet.has(i);
           return (
-            <div key={uid} className={styles.item}>
-              <h3 className={styles.heading}>
+            <div key={uid} className="border-b border-slate-200">
+              <h3 className="m-0">
                 <button
                   ref={(el) => {
                     headerRefs.current[i] = el;
@@ -82,12 +81,12 @@ const Accordion = ({ rendering, params }: AccordionProps) => {
                   type="button"
                   aria-expanded={open}
                   aria-controls={`panel-${uid}`}
-                  className={styles.trigger}
+                  className="flex w-full cursor-pointer items-center justify-between gap-2 py-3 text-left font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                   onClick={() => toggle(i)}
                   onKeyDown={(e) => onKeyDown(e, i)}
                 >
                   {isTextField(title) ? <Text field={title} /> : `Item ${i + 1}`}
-                  <span aria-hidden="true" className={styles.indicator} />
+                  <span aria-hidden="true">{open ? '−' : '+'}</span>
                 </button>
               </h3>
               <div
@@ -95,7 +94,7 @@ const Accordion = ({ rendering, params }: AccordionProps) => {
                 role="region"
                 aria-labelledby={`header-${uid}`}
                 hidden={!open}
-                className={styles.panel}
+                className="pb-4"
               >
                 {component}
               </div>
