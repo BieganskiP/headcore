@@ -20,7 +20,7 @@ describe('renderStoryFile', () => {
     expect(out).toContain("title: 'Sitecore/Tab',");
     expect(out).toContain('decorators: [withSitecore()],');
     expect(out).toContain('satisfies Meta<typeof Tab>');
-    expect(out).toContain("args: { ...mock, rendering: { componentName: 'Tab', ...mock } },");
+    expect(out).toContain("args: { ...mock, rendering: { componentName: 'Tab', dataSource: 'storybook', ...mock } },");
   });
 
   it('imports placeholder children as siblings and passes a component map', () => {

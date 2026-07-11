@@ -55,7 +55,7 @@ describe('renderMockFile', () => {
     expect(Object.keys(parsed)).toEqual(['fields', 'params']);
   });
 
-  it('filters out empty placeholder arrays and never emits child dataSource', () => {
+  it('filters out empty placeholder arrays and keeps child dataSource', () => {
     const container: RenderingNode = {
       componentName: 'Carousel',
       fields: {},
@@ -69,7 +69,7 @@ describe('renderMockFile', () => {
     };
     const parsed = JSON.parse(renderMockFile(container));
     expect(Object.keys(parsed.placeholders)).toEqual(['headcore-carousel']);
-    expect(parsed.placeholders['headcore-carousel'][0].dataSource).toBeUndefined();
+    expect(parsed.placeholders['headcore-carousel'][0].dataSource).toBe('/Data/Slide');
   });
 
   it('omits placeholders entirely when all arrays are empty', () => {

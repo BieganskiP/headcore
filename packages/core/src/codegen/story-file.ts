@@ -54,6 +54,9 @@ export function renderStoryFile(
   const title = config.titlePrefix ? `${config.titlePrefix}/${name}` : name;
   const mapArg = children.length > 0 ? `{ ${children.join(', ')} }` : '';
 
+  // `dataSource: 'storybook'` is placed before the mock spread so a mock's own
+  // top-level dataSource wins. The synthetic value satisfies `withDatasourceCheck`,
+  // which renders null when dataSource is falsy outside editing mode.
   return `import type { Meta, StoryObj } from '@storybook/react';
 import ${name} from './${name}';
 import mock from './${name}.mock.json';
@@ -67,7 +70,7 @@ const meta = {
 export default meta;
 
 export const Default: StoryObj<typeof meta> = {
-  args: { ...mock, rendering: { componentName: '${name}', ...mock } },
+  args: { ...mock, rendering: { componentName: '${name}', dataSource: 'storybook', ...mock } },
 };
 `;
 }
