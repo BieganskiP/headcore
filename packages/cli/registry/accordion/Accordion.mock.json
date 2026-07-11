@@ -1,0 +1,10 @@
+{
+  "fields": {},
+  "params": {},
+  "placeholders": {
+    "headcore-accordion": [
+      { "componentName": "AccordionItem", "uid": "item-1", "fields": { "title": { "value": "What is headcore?" } }, "params": {} },
+      { "componentName": "AccordionItem", "uid": "item-2", "fields": { "title": { "value": "How do I install it?" } }, "params": {} }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "fields": {},
+  "params": {},
+  "placeholders": {
+    "headcore-carousel": [
+      { "componentName": "CarouselSlide", "uid": "slide-1", "fields": { "title": { "value": "First slide" } }, "params": {} },
+      { "componentName": "CarouselSlide", "uid": "slide-2", "fields": { "title": { "value": "Second slide" } }, "params": {} }
+    ]
+  }
+}

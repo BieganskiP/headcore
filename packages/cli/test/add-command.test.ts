@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { mkdtempSync, readFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runAdd } from '../src/commands/add.js';
@@ -192,5 +192,66 @@ describe('runAdd', () => {
     expect(md).toContain('## 5. Placement');
     expect(md).toContain('partial design');
     expect(md).toContain('SITECORE_EDGE_CONTEXT_ID');
+  });
+
+  const STORYBOOK = (dir: string) => ({
+    enabled: true,
+    titlePrefix: 'Sitecore',
+    decoratorPath: join(dir, '.storybook/sitecore-decorator.tsx'),
+  });
+
+  it('copies mock files when generateMocks is on', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = makeConfig(dir);
+    await runAdd({ name: 'Carousel', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+    const mock = JSON.parse(readFileSync(join(config.componentPath, 'Carousel', 'Carousel.mock.json'), 'utf8'));
+    expect(mock.placeholders['headcore-carousel'][0].componentName).toBe('CarouselSlide');
+    expect(existsSync(join(config.componentPath, 'CarouselSlide', 'CarouselSlide.mock.json'))).toBe(true);
+  });
+
+  it('skips mock files when generateMocks and storybook are both off', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = { ...makeConfig(dir), generateMocks: false };
+    await runAdd({ name: 'Tabs', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+    expect(existsSync(join(config.componentPath, 'Tabs', 'Tabs.mock.json'))).toBe(false);
+    expect(existsSync(join(config.componentPath, 'Tabs', 'Tabs.stories.tsx'))).toBe(false);
+  });
+
+  it('writes stories, mocks, and the decorator when storybook is enabled', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = { ...makeConfig(dir), generateMocks: false, storybook: STORYBOOK(dir) };
+    await runAdd({ name: 'Carousel', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+
+    const story = readFileSync(join(config.componentPath, 'Carousel', 'Carousel.stories.tsx'), 'utf8');
+    expect(story).toContain("title: 'Sitecore/Carousel',");
+    expect(story).toContain("import CarouselSlide from '../CarouselSlide/CarouselSlide';");
+    expect(story).toContain('withSitecore({ CarouselSlide })');
+    expect(existsSync(join(config.componentPath, 'Carousel', 'Carousel.mock.json'))).toBe(true);
+    expect(existsSync(join(dir, '.storybook', 'sitecore-decorator.tsx'))).toBe(true);
+
+    const slideStory = readFileSync(join(config.componentPath, 'CarouselSlide', 'CarouselSlide.stories.tsx'), 'utf8');
+    expect(slideStory).toContain('withSitecore()');
+  });
+
+  it('writes the decorator once per run and never overwrites it', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = { ...makeConfig(dir), storybook: STORYBOOK(dir) };
+    const deps = { loadConfig: vi.fn().mockResolvedValue(config) };
+    const result = await runAdd({ name: 'Carousel', dryRun: false, force: false }, deps);
+    expect(result.written.filter((p) => p.endsWith('sitecore-decorator.tsx'))).toHaveLength(1);
+
+    writeFileSync(STORYBOOK(dir).decoratorPath, '// user edited\n', 'utf8');
+    await runAdd({ name: 'Carousel', dryRun: false, force: true }, deps);
+    expect(readFileSync(STORYBOOK(dir).decoratorPath, 'utf8')).toBe('// user edited\n');
+  });
+
+  it('passes Breadcrumbs crumbs through as story args via the mock', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-add-'));
+    const config = { ...makeConfig(dir), storybook: STORYBOOK(dir) };
+    await runAdd({ name: 'Breadcrumbs', dryRun: false, force: false }, { loadConfig: vi.fn().mockResolvedValue(config) });
+    const mock = JSON.parse(readFileSync(join(config.componentPath, 'Breadcrumbs', 'Breadcrumbs.mock.json'), 'utf8'));
+    expect(mock.crumbs.length).toBeGreaterThanOrEqual(2);
+    const story = readFileSync(join(config.componentPath, 'Breadcrumbs', 'Breadcrumbs.stories.tsx'), 'utf8');
+    expect(story).toContain('args: { ...mock,');
   });
 });

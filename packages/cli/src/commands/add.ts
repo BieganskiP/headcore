@@ -3,9 +3,13 @@ import { dirname, join } from 'node:path';
 import {
   loadConfig as defaultLoadConfig,
   renderSitecoreInstructions,
+  renderStoryFile,
+  resolveStorybook,
   type HeadcoreConfig,
+  type StoryMockNode,
 } from 'headcore-core';
-import { readComponentManifest, readComponentFiles, resolveComponentNames } from '../registry.js';
+import { readComponentManifest, readComponentFiles, readComponentMock, resolveComponentNames } from '../registry.js';
+import { decoratorOutput } from '../storybook.js';
 import { resolveCliConfigPath } from '../config-path.js';
 
 export interface AddInput {
@@ -55,6 +59,7 @@ export async function runAdd(input: AddInput, deps?: Partial<AddDeps>): Promise<
 
   const loadConfig = deps?.loadConfig ?? defaultLoadConfig;
   const config = await loadConfig(resolveCliConfigPath());
+  const storybook = resolveStorybook(config);
 
   const outputs: OutputFile[] = [];
   for (const name of resolveComponentNames(input.name)) {
@@ -69,7 +74,27 @@ export async function runAdd(input: AddInput, deps?: Partial<AddDeps>): Promise<
       outputs.push({ path: join(targetDir, f.file), contents: applyImportRewrites(f.file, f.contents, config) });
     }
     outputs.push({ path: join(targetDir, docName), contents: renderSitecoreInstructions(manifest) });
+
+    const mock = readComponentMock(name);
+    if (mock && (config.generateMocks || storybook.enabled)) {
+      outputs.push({ path: join(targetDir, `${manifest.name}.mock.json`), contents: mock });
+    }
+    if (mock && storybook.enabled) {
+      const placeholders = (JSON.parse(mock) as { placeholders?: Record<string, StoryMockNode[]> }).placeholders;
+      outputs.push({
+        path: join(targetDir, `${manifest.name}.stories.tsx`),
+        contents: renderStoryFile(manifest.name, placeholders, {
+          componentPath: config.componentPath,
+          componentFolder: config.componentFolder,
+          titlePrefix: storybook.titlePrefix,
+          decoratorPath: storybook.decoratorPath,
+        }),
+      });
+    }
   }
+
+  const decorator = decoratorOutput(config);
+  if (decorator) outputs.push(decorator);
 
   if (input.dryRun) {
     return { written: [], preview: outputs.map((o) => o.path) };

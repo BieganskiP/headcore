@@ -48,6 +48,14 @@ export function readComponentManifest(name: string, root: string = defaultRegist
   return parseManifest(JSON.parse(readFileSync(manifestPath(root, dir), 'utf8')));
 }
 
+/** Read a component's mock JSON (by convention `<Name>.mock.json`), or null when absent. */
+export function readComponentMock(name: string, root: string = defaultRegistryRoot()): string | null {
+  const manifest = readComponentManifest(name, root);
+  const dir = findDir(name, root) ?? name;
+  const path = join(root, dir, `${manifest.name}.mock.json`);
+  return existsSync(path) ? readFileSync(path, 'utf8') : null;
+}
+
 /** Read a component's source files (contents) as declared in its manifest. */
 export function readComponentFiles(name: string, root: string = defaultRegistryRoot()): ComponentFile[] {
   const manifest = readComponentManifest(name, root);

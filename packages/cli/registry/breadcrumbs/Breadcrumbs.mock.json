@@ -1,0 +1,9 @@
+{
+  "fields": {},
+  "params": {},
+  "crumbs": [
+    { "label": "Home", "href": "/" },
+    { "label": "Products", "href": "/products" },
+    { "label": "Hiking Boots", "href": "/products/hiking-boots" }
+  ]
+}
