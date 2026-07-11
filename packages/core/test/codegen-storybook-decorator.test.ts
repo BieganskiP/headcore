@@ -14,6 +14,9 @@ describe('renderStorybookDecorator', () => {
     expect(out).toContain('isEditing: false');
     expect(out).toContain('componentMap');
     expect(out).toContain('<Story />');
+    // Generated stories call withSitecore() with no args for leaf components —
+    // the default parameter is load-bearing for that contract.
+    expect(out).toContain('components: Record<string, ComponentType<any>> = {}');
   });
 
   it('tells the reader the file is generated once and safe to edit', () => {
