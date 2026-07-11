@@ -79,7 +79,7 @@ describe('runComponent', () => {
     const dir = mkdtempSync(join(tmpdir(), 'scaffold-sb-'));
     const config = {
       ...makeConfig(join(dir, 'components')),
-      generateMocks: false,
+      generateMocks: false, // storybook implies mock emission even with generateMocks off
       storybook: { enabled: true, titlePrefix: 'Sitecore', decoratorPath: join(dir, '.storybook/sitecore-decorator.tsx') },
     };
     const result = await runComponent(
@@ -104,6 +104,22 @@ describe('runComponent', () => {
     writeFileSync(decoratorPath, '// user edited\n', 'utf8');
     await runComponent({ name: 'Hero', route: '/about-us', lang: undefined, dryRun: false, force: true }, deps);
     expect(rf(decoratorPath, 'utf8')).toBe('// user edited\n');
+  });
+
+  it('previews the decorator on dry-run without writing it', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'scaffold-sb-dry-'));
+    const decoratorPath = join(dir, '.storybook/sitecore-decorator.tsx');
+    const config = {
+      ...makeConfig(join(dir, 'components')),
+      storybook: { enabled: true, titlePrefix: 'Sitecore', decoratorPath },
+    };
+    const result = await runComponent(
+      { name: 'Hero', route: '/about-us', lang: undefined, dryRun: true, force: false },
+      { loadConfig: vi.fn().mockResolvedValue(config), getLayout: vi.fn().mockResolvedValue(rendered) },
+    );
+    expect(result.preview.some((f) => f.path === decoratorPath)).toBe(true);
+    expect(existsSync(decoratorPath)).toBe(false);
+    expect(result.written).toEqual([]);
   });
 
   it('errors with ambiguous when multiple renderings share the same componentName', async () => {

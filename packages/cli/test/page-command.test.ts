@@ -120,6 +120,18 @@ describe('runPage', () => {
     expect(storyFiles.length).toBeGreaterThan(0);
   });
 
+  it('reports the decorator in extraFiles on dry-run without writing it', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'scaffold-page-sb-dry-'));
+    const decoratorPath = join(dir, '.storybook/sitecore-decorator.tsx');
+    const config = {
+      ...makeConfig(join(dir, 'components')),
+      storybook: { enabled: true, titlePrefix: 'Sitecore', decoratorPath },
+    };
+    const result = await runPage({ route: '/about-us', lang: undefined, dryRun: true, force: false }, deps(config));
+    expect(result.extraFiles.map((f) => f.path)).toEqual([decoratorPath]);
+    expect(existsSync(decoratorPath)).toBe(false);
+  });
+
   it('surfaces merge warnings for conflicting field types across instances', async () => {
     const layout = {
       sitecore: {

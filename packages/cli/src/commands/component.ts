@@ -58,6 +58,8 @@ export async function runComponent(input: ComponentInput, deps?: Partial<Inspect
   const variants =
     input.variants && input.variants.length > 0 ? normalizeVariants(input.variants) : undefined;
   const files = generateFiles(contract, node, config, variants);
+  // The decorator rides the normal write pipeline; write-once is enforced by
+  // decoratorOutput returning null when the file already exists.
   const decorator = decoratorOutput(config);
   if (decorator) files.push(decorator);
 
