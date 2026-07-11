@@ -3,8 +3,8 @@
   "params": {},
   "placeholders": {
     "headcore-tabs": [
-      { "componentName": "Tab", "uid": "tab-1", "fields": { "title": { "value": "Overview" } }, "params": {} },
-      { "componentName": "Tab", "uid": "tab-2", "fields": { "title": { "value": "Specifications" } }, "params": {} }
+      { "componentName": "Tab", "uid": "tab-1", "dataSource": "storybook", "fields": { "title": { "value": "Overview" } }, "params": {} },
+      { "componentName": "Tab", "uid": "tab-2", "dataSource": "storybook", "fields": { "title": { "value": "Specifications" } }, "params": {} }
     ]
   }
 }

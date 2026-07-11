@@ -207,6 +207,8 @@ describe('runAdd', () => {
     const mock = JSON.parse(readFileSync(join(config.componentPath, 'Carousel', 'Carousel.mock.json'), 'utf8'));
     expect(mock.placeholders['headcore-carousel'][0].componentName).toBe('CarouselSlide');
     expect(existsSync(join(config.componentPath, 'CarouselSlide', 'CarouselSlide.mock.json'))).toBe(true);
+    expect(mock.placeholders['headcore-carousel'][0].dataSource).toBe('storybook');
+    expect(existsSync(join(config.componentPath, 'Carousel', 'Carousel.stories.tsx'))).toBe(false); // stories need storybook.enabled
   });
 
   it('skips mock files when generateMocks and storybook are both off', async () => {

@@ -3,8 +3,8 @@
   "params": {},
   "placeholders": {
     "headcore-carousel": [
-      { "componentName": "CarouselSlide", "uid": "slide-1", "fields": { "title": { "value": "First slide" } }, "params": {} },
-      { "componentName": "CarouselSlide", "uid": "slide-2", "fields": { "title": { "value": "Second slide" } }, "params": {} }
+      { "componentName": "CarouselSlide", "uid": "slide-1", "dataSource": "storybook", "fields": { "title": { "value": "First slide" } }, "params": {} },
+      { "componentName": "CarouselSlide", "uid": "slide-2", "dataSource": "storybook", "fields": { "title": { "value": "Second slide" } }, "params": {} }
     ]
   }
 }

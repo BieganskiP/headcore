@@ -1,10 +1,10 @@
 {
   "fields": {},
-  "params": {},
+  "params": { "AllowMultiple": "1" },
   "placeholders": {
     "headcore-accordion": [
-      { "componentName": "AccordionItem", "uid": "item-1", "fields": { "title": { "value": "What is headcore?" } }, "params": {} },
-      { "componentName": "AccordionItem", "uid": "item-2", "fields": { "title": { "value": "How do I install it?" } }, "params": {} }
+      { "componentName": "AccordionItem", "uid": "item-1", "dataSource": "storybook", "fields": { "title": { "value": "What is headcore?" } }, "params": {} },
+      { "componentName": "AccordionItem", "uid": "item-2", "dataSource": "storybook", "fields": { "title": { "value": "How do I install it?" } }, "params": {} }
     ]
   }
 }
