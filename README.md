@@ -165,6 +165,28 @@ The `styling` config option controls **introspect-generated** component styles:
 (Copy-in Library components ship with inline Tailwind utility classes; the
 `styling` option does not transform them.)
 
+## Storybook
+
+headcore can emit a CSF3 story next to each component it adds or generates —
+enable it in `headcore.config.ts`:
+
+```ts
+storybook: {
+  enabled: true,
+  titlePrefix: 'Sitecore',                            // stories appear as "Sitecore/<Name>"
+  decoratorPath: '.storybook/sitecore-decorator.tsx', // shared decorator, written once
+},
+```
+
+headcore does **not** install Storybook — bring your own (the `@storybook/nextjs`
+framework is recommended for Content SDK projects, and `resolveJsonModule` must be
+on, as it is in the Content SDK starters). Enabling stories implies mock emission:
+each story imports its component's `<Name>.mock.json` as args. Extra top-level keys
+in a mock (e.g. Breadcrumbs' `crumbs`) are passed through as story args. The shared
+decorator wraps stories in `SitecoreProvider` (never in editing mode) and takes a
+component map so `<Placeholder>` children resolve — it's written only if missing,
+so it's yours to adapt to your SDK version.
+
 ## Placeholders
 
 Nested placeholders on a rendering are scaffolded as

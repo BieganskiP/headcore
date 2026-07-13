@@ -67,6 +67,15 @@ describe('runInit', () => {
     expect(config.styling).toBe('css');
   });
 
+  it('includes a commented-out storybook section in the template', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'headcore-init-'));
+    runInit({ dryRun: false, force: false, cwd: dir });
+    const written = readFileSync(join(dir, 'headcore.config.ts'), 'utf8');
+    expect(written).toContain('// storybook: {');
+    expect(written).toContain('titlePrefix');
+    expect(written).toContain('decoratorPath');
+  });
+
   it('stays in sync with headcore.config.example.ts at the repo root', () => {
     const dir = mkdtempSync(join(tmpdir(), 'headcore-init-'));
     const { path } = runInit({ dryRun: false, force: false, cwd: dir });

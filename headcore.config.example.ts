@@ -20,6 +20,13 @@ const headcoreConfig = {
   fieldTypeOverrides: {},
   i18nPath: 'src/lib/i18n', // where dictionary-keys.ts and use-typed-t.ts are written
   i18nPackage: 'next-localization', // provides useI18n() for the typed t wrapper
+  // Storybook story generation ("bring your own Storybook" — headcore emits
+  // <Name>.stories.tsx + mocks; enabling this implies mock emission):
+  // storybook: {
+  //   enabled: true,
+  //   titlePrefix: 'Sitecore', // stories appear as "Sitecore/<Name>" ('' for bare names)
+  //   decoratorPath: '.storybook/sitecore-decorator.tsx', // shared decorator, written once and never overwritten
+  // },
 };
 
 export default headcoreConfig;
