@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { GuiState, GuiLayoutNode } from '../lib/types';
 import type { View } from '../lib/router';
 import { Badge } from '../components/Badge';
@@ -34,7 +35,7 @@ function PlaceholderList({ placeholders, navigate }: { placeholders: Record<stri
       {entries.map(([key, nodes]) => (
         <li key={key} className="mt-1">
           <Badge tone="slate">{key}</Badge>
-          <ul>{nodes.map((n, i) => <LayoutNode key={`${n.componentName}-${i}`} node={n} navigate={navigate} />)}</ul>
+          <ul className="mt-1">{nodes.map((n, i) => <LayoutNode key={`${n.componentName}-${i}`} node={n} navigate={navigate} />)}</ul>
         </li>
       ))}
     </ul>
@@ -43,6 +44,11 @@ function PlaceholderList({ placeholders, navigate }: { placeholders: Record<stri
 
 export function InspectorView({ state, route, navigate }: { state: GuiState; route?: string; navigate: (v: View) => void }) {
   const selected = route !== undefined ? state.routes.find((r) => r.routePath === route) : undefined;
+
+  const sortedRoutes = useMemo(
+    () => [...state.routes].sort((a, b) => a.routePath.localeCompare(b.routePath)),
+    [state.routes],
+  );
 
   return (
     <div className="max-w-4xl">
@@ -55,7 +61,7 @@ export function InspectorView({ state, route, navigate }: { state: GuiState; rou
           className="rounded border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950"
         >
           <option value="">Pick a route…</option>
-          {[...state.routes].sort((a, b) => a.routePath.localeCompare(b.routePath)).map((r) => (
+          {sortedRoutes.map((r) => (
             <option key={r.routePath} value={r.routePath}>{r.routePath}</option>
           ))}
         </select>

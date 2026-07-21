@@ -14,6 +14,7 @@ function StatCard({ label, value, hint, onClick }: { label: string; value: strin
   if (!onClick) return <div className={base}>{body}</div>;
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`${base} hover:border-sky-400 focus-visible:ring-2 focus-visible:ring-sky-400 dark:hover:border-sky-600`}
     >
@@ -82,7 +83,7 @@ export function Overview({ state, navigate }: { state: GuiState; navigate: (v: V
           <ul className="text-sm">
             {emptyRoutes.slice(0, 20).map((r) => (
               <li key={r.routePath}>
-                <button className="text-sky-600 hover:underline focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-sky-400" onClick={() => navigate({ view: 'inspector', route: r.routePath })}>
+                <button type="button" className="text-sky-600 hover:underline focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-sky-400" onClick={() => navigate({ view: 'inspector', route: r.routePath })}>
                   {r.routePath}
                 </button>
               </li>
