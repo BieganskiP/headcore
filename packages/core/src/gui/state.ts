@@ -64,3 +64,38 @@ export function manifestToRegistryEntry(m: ComponentManifest): GuiRegistryEntry 
     ...(m.sitecore.placement !== undefined ? { placement: m.sitecore.placement } : {}),
   };
 }
+
+export interface GuiStateSources {
+  site: string;
+  language: string;
+  routes: () => Promise<GuiRouteDetail[]>;
+  dictionaryCount: () => Promise<number>;
+  registry: GuiRegistryEntry[];
+  /** Injectable clock for tests. */
+  now?: () => Date;
+}
+
+/**
+ * Assemble the dashboard state. A routes failure propagates (there is no
+ * useful state without routes); a dictionary failure degrades to count 0
+ * plus an errors entry.
+ */
+export async function assembleGuiState(src: GuiStateSources): Promise<GuiState> {
+  const routes = await src.routes();
+  const errors: string[] = [];
+  let dictionaryCount = 0;
+  try {
+    dictionaryCount = await src.dictionaryCount();
+  } catch (err) {
+    errors.push(`dictionary: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  return {
+    site: src.site,
+    language: src.language,
+    fetchedAt: (src.now?.() ?? new Date()).toISOString(),
+    routes,
+    registry: src.registry,
+    dictionaryCount,
+    ...(errors.length > 0 ? { errors } : {}),
+  };
+}

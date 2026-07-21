@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { trimPlaceholders, manifestToRegistryEntry } from '../src/gui/state.js';
+import {
+  trimPlaceholders,
+  manifestToRegistryEntry,
+  assembleGuiState,
+  type GuiRouteDetail,
+  type GuiRegistryEntry,
+} from '../src/gui/state.js';
 import type { RenderingNode } from '../src/types.js';
 import type { ComponentManifest } from '../src/registry/manifest.js';
 
@@ -83,5 +89,60 @@ describe('manifestToRegistryEntry', () => {
       componentName: 'Tabs',
       description: 'Editable tabs',
     });
+  });
+});
+
+describe('assembleGuiState', () => {
+  const route: GuiRouteDetail = {
+    routePath: '/', name: 'Home', updatedAt: '2026-07-01', components: ['Hero'], layout: {},
+  };
+  const registry: GuiRegistryEntry[] = [
+    { name: 'Tabs', componentName: 'Tabs', description: 'Editable tabs' },
+  ];
+  const now = () => new Date('2026-07-21T10:00:00.000Z');
+
+  it('combines routes, registry and dictionary count with a timestamp', async () => {
+    const state = await assembleGuiState({
+      site: 'my-site',
+      language: 'en',
+      routes: async () => [route],
+      dictionaryCount: async () => 42,
+      registry,
+      now,
+    });
+    expect(state).toEqual({
+      site: 'my-site',
+      language: 'en',
+      fetchedAt: '2026-07-21T10:00:00.000Z',
+      routes: [route],
+      registry,
+      dictionaryCount: 42,
+    });
+    expect(state.errors).toBeUndefined();
+  });
+
+  it('degrades a dictionary failure to count 0 plus an errors entry', async () => {
+    const state = await assembleGuiState({
+      site: 'my-site',
+      language: 'en',
+      routes: async () => [route],
+      dictionaryCount: async () => { throw new Error('edge down'); },
+      registry,
+      now,
+    });
+    expect(state.dictionaryCount).toBe(0);
+    expect(state.errors).toEqual(['dictionary: edge down']);
+    expect(state.routes).toEqual([route]);
+  });
+
+  it('propagates a routes failure (no state without routes)', async () => {
+    await expect(assembleGuiState({
+      site: 'my-site',
+      language: 'en',
+      routes: async () => { throw new Error('HTTP 401'); },
+      dictionaryCount: async () => 0,
+      registry: [],
+      now,
+    })).rejects.toThrow(/401/);
   });
 });
