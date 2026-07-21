@@ -7,6 +7,7 @@ import { Badge } from '../components/Badge';
 function RouteLink({ route, navigate }: { route: GuiRouteDetail; navigate: (v: View) => void }) {
   return (
     <button
+      type="button"
       className="font-medium text-sky-600 hover:underline focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-sky-400"
       onClick={() => navigate({ view: 'inspector', route: route.routePath })}
       title={`Inspect ${route.routePath}`}
@@ -18,13 +19,13 @@ function RouteLink({ route, navigate }: { route: GuiRouteDetail; navigate: (v: V
 
 function TreeNode({ node, navigate, depth }: { node: RouteTreeNode; navigate: (v: View) => void; depth: number }) {
   const [open, setOpen] = useState(depth < 2);
-  const count = routeCount(node);
+  const count = useMemo(() => routeCount(node), [node]);
 
   return (
     <li>
       <div className="flex items-center gap-2 py-0.5" style={{ paddingLeft: `${depth * 16}px` }}>
         {node.children.length > 0 ? (
-          <button className="w-4 text-slate-400 focus-visible:ring-2 focus-visible:ring-sky-400" onClick={() => setOpen(!open)} aria-label={open ? 'collapse' : 'expand'}>
+          <button type="button" className="w-4 text-slate-400 focus-visible:ring-2 focus-visible:ring-sky-400" onClick={() => setOpen(!open)} aria-label={open ? `collapse ${node.segment}` : `expand ${node.segment}`}>
             {open ? '▾' : '▸'}
           </button>
         ) : (
@@ -35,7 +36,7 @@ function TreeNode({ node, navigate, depth }: { node: RouteTreeNode; navigate: (v
         {node.route && node.route.components.length > 0 && (
           <span className="flex flex-wrap gap-1">
             {node.route.components.map((c) => (
-              <button key={c} className="focus-visible:ring-2 focus-visible:ring-sky-400" onClick={() => navigate({ view: 'components', component: c })}>
+              <button type="button" key={c} className="focus-visible:ring-2 focus-visible:ring-sky-400" onClick={() => navigate({ view: 'components', component: c })}>
                 <Badge>{c}</Badge>
               </button>
             ))}
@@ -90,12 +91,15 @@ export function RoutesView({ state, navigate }: { state: GuiState; navigate: (v:
           value={sort}
           onChange={(e) => setSort(e.target.value as 'path' | 'updated')}
           aria-label="Sort routes"
-          className="rounded border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950"
+          disabled={mode === 'tree'}
+          title={mode === 'tree' ? 'Tree is always sorted by segment' : undefined}
+          className="rounded border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700 dark:bg-slate-950 disabled:opacity-50"
         >
           <option value="path">Sort: path</option>
           <option value="updated">Sort: updated</option>
         </select>
         <button
+          type="button"
           className="rounded border border-slate-300 px-2 py-1 text-sm focus-visible:ring-2 focus-visible:ring-sky-400 dark:border-slate-700"
           onClick={() => setMode(mode === 'tree' ? 'table' : 'tree')}
         >
@@ -119,7 +123,7 @@ export function RoutesView({ state, navigate }: { state: GuiState; navigate: (v:
             {filtered.map((r) => (
               <tr key={r.routePath} className="border-b border-slate-100 dark:border-slate-900">
                 <td className="py-1.5 pr-4">
-                  <button className="text-sky-600 hover:underline focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-sky-400" onClick={() => navigate({ view: 'inspector', route: r.routePath })}>
+                  <button type="button" className="text-sky-600 hover:underline focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-sky-400" onClick={() => navigate({ view: 'inspector', route: r.routePath })}>
                     <code>{r.routePath}</code>
                   </button>
                 </td>
@@ -128,7 +132,7 @@ export function RoutesView({ state, navigate }: { state: GuiState; navigate: (v:
                 <td className="py-1.5">
                   <span className="flex flex-wrap gap-1">
                     {r.components.map((c) => (
-                      <button key={c} className="focus-visible:ring-2 focus-visible:ring-sky-400" onClick={() => navigate({ view: 'components', component: c })}>
+                      <button type="button" key={c} className="focus-visible:ring-2 focus-visible:ring-sky-400" onClick={() => navigate({ view: 'components', component: c })}>
                         <Badge>{c}</Badge>
                       </button>
                     ))}
