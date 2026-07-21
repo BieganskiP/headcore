@@ -5,8 +5,9 @@ import { usageCounts, registryCoverage } from '../lib/analytics';
 import { Badge } from '../components/Badge';
 
 export function ComponentsView({ state, selected, navigate }: { state: GuiState; selected?: string; navigate: (v: View) => void }) {
-  const usage = useMemo(() => usageCounts(state.routes, state.registry), [state]);
-  const coverage = useMemo(() => registryCoverage(state.routes, state.registry), [state]);
+  const usage = useMemo(() => usageCounts(state.routes, state.registry), [state.routes, state.registry]);
+  const coverage = useMemo(() => registryCoverage(state.routes, state.registry), [state.routes, state.registry]);
+  const usedNames = useMemo(() => new Set(coverage.used.map((e) => e.name)), [coverage]);
   const max = usage[0]?.count ?? 1;
   const detail = selected !== undefined ? usage.find((u) => u.name === selected) : undefined;
 
@@ -27,6 +28,7 @@ export function ComponentsView({ state, selected, navigate }: { state: GuiState;
             {detail.inRegistry && <Badge tone="green">registry</Badge>}
             <button
               type="button"
+              aria-label={`Clear selection: ${detail.name}`}
               className="ml-auto text-sm text-slate-500 hover:underline focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-slate-400"
               onClick={() => navigate({ view: 'components' })}
             >
@@ -55,9 +57,9 @@ export function ComponentsView({ state, selected, navigate }: { state: GuiState;
       <table className="mb-8 w-full text-left text-sm">
         <thead>
           <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
-            <th className="py-2 pr-4">Component</th>
-            <th className="w-24 py-2 pr-4">Routes</th>
-            <th className="py-2">Usage</th>
+            <th scope="col" className="py-2 pr-4">Component</th>
+            <th scope="col" className="w-24 py-2 pr-4">Routes</th>
+            <th scope="col" className="py-2">Usage</th>
           </tr>
         </thead>
         <tbody>
@@ -75,7 +77,7 @@ export function ComponentsView({ state, selected, navigate }: { state: GuiState;
               </td>
               <td className="py-1.5 pr-4">{u.count}</td>
               <td className="py-1.5">
-                <div className="h-2 rounded bg-sky-500/80" style={{ width: `${(u.count / max) * 100}%` }} />
+                <div aria-hidden="true" className="h-2 rounded bg-sky-500/80" style={{ width: `${(u.count / max) * 100}%` }} />
               </td>
             </tr>
           ))}
@@ -88,7 +90,7 @@ export function ComponentsView({ state, selected, navigate }: { state: GuiState;
         </h2>
         <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
           {state.registry.map((entry) => {
-            const used = coverage.used.some((e) => e.name === entry.name);
+            const used = usedNames.has(entry.name);
             return (
               <li key={entry.name} className="rounded border border-slate-200 p-3 dark:border-slate-800">
                 <div className="flex items-center gap-2">

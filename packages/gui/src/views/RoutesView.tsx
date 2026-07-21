@@ -113,10 +113,10 @@ export function RoutesView({ state, navigate }: { state: GuiState; navigate: (v:
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
-              <th className="py-2 pr-4">Route</th>
-              <th className="py-2 pr-4">Name</th>
-              <th className="py-2 pr-4">Updated</th>
-              <th className="py-2">Components</th>
+              <th scope="col" className="py-2 pr-4">Route</th>
+              <th scope="col" className="py-2 pr-4">Name</th>
+              <th scope="col" className="py-2 pr-4">Updated</th>
+              <th scope="col" className="py-2">Components</th>
             </tr>
           </thead>
           <tbody>
