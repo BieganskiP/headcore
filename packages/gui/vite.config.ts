@@ -11,6 +11,7 @@ export default defineConfig({
   },
   server: {
     // Dev HMR against a locally running `headcore gui --no-open`.
+    // 4646 must match DEFAULT_PORT in packages/cli/src/commands/gui.ts.
     proxy: { '/api': 'http://localhost:4646' },
   },
 });
