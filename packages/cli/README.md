@@ -60,6 +60,7 @@ headcore inspect <route>
 headcore page <route> [--lang <lang>] [--dry-run] [--force]
 headcore dictionary [--lang <lang>] [--dry-run] [--force]
 headcore routes [--lang <lang>] [--filter <substring>] [--sort path|updated] [--components] [--tree [--tree-all]] [--json] [--out <file>]
+headcore gui [--lang <lang>] [--port <n>] [--no-open]
 headcore component <Name> --route <route> [--lang <lang>] [--variants <A,B,C>] [--dry-run] [--force]
 ```
 
