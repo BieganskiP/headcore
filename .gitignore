@@ -7,3 +7,4 @@ dist/
 docs/
 .superpowers/
 .worktrees/
+packages/cli/gui-dist/
