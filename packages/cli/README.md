@@ -76,6 +76,25 @@ headcore component <Name> --route <route> [--lang <lang>] [--variants <A,B,C>] [
   `--tree` renders the routes as a path hierarchy with per-branch page counts,
   auto-collapsing big groups of sibling pages (`--tree-all` expands them).
 
+### GUI dashboard
+
+```bash
+headcore gui [--lang <lang>] [--port <n>] [--no-open]
+```
+
+Starts a local, read-only analytical dashboard for the configured site:
+routes (tree + table), components with usage counts and registry coverage,
+a per-route layout inspector, and site health (freshness, dictionary size).
+Data is fetched from Experience Edge once at startup; use the Refresh button
+(or the language box) to refetch. Default port 4646 (auto-increments if
+busy), bound to 127.0.0.1 only.
+
+Tip: add a script to your project for quick access:
+
+```json
+"scripts": { "headcore:gui": "headcore gui" }
+```
+
 ## Storybook
 
 headcore can emit a CSF3 story next to each component it adds or generates —
