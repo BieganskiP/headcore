@@ -120,3 +120,43 @@ describe('createGuiHandler /api', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('createGuiHandler static serving', () => {
+  it('serves index.html at /', async () => {
+    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), distDir()));
+    const res = await fetch(`${url}/`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8');
+    expect(await res.text()).toContain('headcore');
+  });
+
+  it('serves assets with their mime type', async () => {
+    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), distDir()));
+    const res = await fetch(`${url}/assets/app.js`);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('text/javascript; charset=utf-8');
+  });
+
+  it('falls back to index.html for unknown non-api paths (SPA)', async () => {
+    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), distDir()));
+    const res = await fetch(`${url}/routes`);
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('headcore');
+  });
+
+  it('blocks path traversal outside the dist dir', async () => {
+    const dir = distDir();
+    writeFileSync(join(dir, '..', 'secret.txt'), 'top secret', 'utf8');
+    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), dir));
+    const res = await fetch(`${url}/..%2Fsecret.txt`);
+    expect(res.status).toBe(403);
+    rmSync(join(dir, '..', 'secret.txt'), { force: true });
+  });
+
+  it('returns JSON 404 when the dist dir is missing entirely', async () => {
+    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), join(tmpdir(), 'does-not-exist-headcore')));
+    const res = await fetch(`${url}/`);
+    expect(res.status).toBe(404);
+    expect((await res.json()).errors[0]).toMatch(/assets missing/);
+  });
+});
