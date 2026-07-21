@@ -39,3 +39,15 @@ export type {
   SitecoreParam,
 } from './registry/manifest.js';
 export { renderSitecoreInstructions } from './registry/instructions.js';
+export {
+  trimPlaceholders,
+  manifestToRegistryEntry,
+  assembleGuiState,
+} from './gui/state.js';
+export type {
+  GuiLayoutNode,
+  GuiRouteDetail,
+  GuiRegistryEntry,
+  GuiState,
+  GuiStateSources,
+} from './gui/state.js';
