@@ -3,15 +3,21 @@ import type { View } from '../lib/router';
 import { usageCounts, registryCoverage, freshness } from '../lib/analytics';
 
 function StatCard({ label, value, hint, onClick }: { label: string; value: string | number; hint?: string; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={!onClick}
-      className="rounded-lg border border-slate-200 p-4 text-left hover:border-sky-400 focus-visible:ring-2 focus-visible:ring-sky-400 disabled:cursor-default disabled:hover:border-slate-200 dark:border-slate-800 dark:hover:border-sky-600 dark:disabled:hover:border-slate-800"
-    >
+  const body = (
+    <>
       <div className="text-2xl font-bold">{value}</div>
       <div className="text-sm font-medium text-slate-600 dark:text-slate-400">{label}</div>
       {hint && <div className="mt-1 text-xs text-slate-400 dark:text-slate-500">{hint}</div>}
+    </>
+  );
+  const base = 'rounded-lg border border-slate-200 p-4 text-left dark:border-slate-800';
+  if (!onClick) return <div className={base}>{body}</div>;
+  return (
+    <button
+      onClick={onClick}
+      className={`${base} hover:border-sky-400 focus-visible:ring-2 focus-visible:ring-sky-400 dark:hover:border-sky-600`}
+    >
+      {body}
     </button>
   );
 }
@@ -74,13 +80,16 @@ export function Overview({ state, navigate }: { state: GuiState; navigate: (v: V
             Routes without components ({emptyRoutes.length})
           </h2>
           <ul className="text-sm">
-            {emptyRoutes.map((r) => (
+            {emptyRoutes.slice(0, 20).map((r) => (
               <li key={r.routePath}>
                 <button className="text-sky-600 hover:underline focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-sky-400" onClick={() => navigate({ view: 'inspector', route: r.routePath })}>
                   {r.routePath}
                 </button>
               </li>
             ))}
+            {emptyRoutes.length > 20 && (
+              <li className="text-slate-400 dark:text-slate-500">…and {emptyRoutes.length - 20} more (see Routes)</li>
+            )}
           </ul>
         </section>
       )}
