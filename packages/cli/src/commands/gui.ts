@@ -228,7 +228,7 @@ export async function runGui(input: GuiInput, deps?: Partial<GuiDeps>): Promise<
 
   const server = createServer(createGuiHandler(cache, refresh, deps?.distDir ?? defaultGuiDistDir()));
   const port = await listenWithRetry(server, input.port ?? deps?.basePort ?? DEFAULT_PORT);
-  const url = `http://localhost:${port}`;
+  const url = `http://127.0.0.1:${port}`;
   if (!input.noOpen) (deps?.openBrowser ?? defaultOpenBrowser)(url);
   return { server, url, port, initialErrors };
 }
