@@ -107,4 +107,16 @@ describe('createGuiHandler /api', () => {
     expect(res.status).toBe(404);
     expect((await res.json()).ok).toBe(false);
   });
+
+  it('rejects a malformed percent-encoded path with 400', async () => {
+    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), distDir()));
+    const res = await fetch(`${url}/%`);
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects an oversized refresh body with 400', async () => {
+    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), distDir()));
+    const res = await fetch(`${url}/api/refresh`, { method: 'POST', body: 'x'.repeat(1_100_000) });
+    expect(res.status).toBe(400);
+  });
 });

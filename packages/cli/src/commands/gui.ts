@@ -27,9 +27,17 @@ function sendJson(res: ServerResponse, status: number, body: unknown): void {
   res.end(JSON.stringify(body));
 }
 
+const MAX_BODY_BYTES = 1_000_000;
+
 async function readBody(req: IncomingMessage): Promise<string> {
   const chunks: Buffer[] = [];
-  for await (const chunk of req) chunks.push(chunk as Buffer);
+  let size = 0;
+  // Stream is in default (binary) mode, so chunks are always Buffers.
+  for await (const chunk of req) {
+    size += (chunk as Buffer).length;
+    if (size > MAX_BODY_BYTES) throw new Error('body too large');
+    chunks.push(chunk as Buffer);
+  }
   return Buffer.concat(chunks).toString('utf8');
 }
 
@@ -59,7 +67,13 @@ async function serveStatic(pathname: string, res: ServerResponse, distDir: strin
 export function createGuiHandler(cache: GuiCache, refresh: GuiRefresh, distDir: string): Handler {
   async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const url = new URL(req.url ?? '/', 'http://localhost');
-    const pathname = decodeURIComponent(url.pathname);
+    let pathname: string;
+    try {
+      pathname = decodeURIComponent(url.pathname);
+    } catch {
+      sendJson(res, 400, { ok: false, errors: ['malformed URL'] });
+      return;
+    }
 
     if (pathname === '/api/state' && req.method === 'GET') {
       if (cache.state) sendJson(res, 200, { ok: true, state: cache.state });
@@ -73,7 +87,7 @@ export function createGuiHandler(cache: GuiCache, refresh: GuiRefresh, distDir: 
         const body = await readBody(req);
         if (body) lang = (JSON.parse(body) as { lang?: string }).lang;
       } catch {
-        sendJson(res, 400, { ok: false, errors: ['invalid JSON body'] });
+        sendJson(res, 400, { ok: false, errors: ['invalid request body'] });
         return;
       }
       try {
