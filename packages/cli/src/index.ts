@@ -8,6 +8,7 @@ import { runList } from './commands/list.js';
 import { runInfo } from './commands/info.js';
 import { runAdd } from './commands/add.js';
 import { runInit } from './commands/init.js';
+import { runGui } from './commands/gui.js';
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
@@ -115,6 +116,17 @@ async function main(): Promise<void> {
   if (args.command === 'routes') {
     const result = await runRoutes({ lang: args.lang, filter: args.filter, sort: args.sort, json: args.json, out: args.out, components: args.components, tree: args.tree, treeAll: args.treeAll });
     process.stdout.write(result.output + '\n');
+    return;
+  }
+
+  if (args.command === 'gui') {
+    const result = await runGui({ lang: args.lang, port: args.port, noOpen: args.noOpen });
+    process.stdout.write(`headcore gui running at ${result.url}\n`);
+    for (const e of result.initialErrors) {
+      process.stdout.write(`warning: initial fetch failed: ${e}\n`);
+      process.stdout.write('  The dashboard shows an error panel with a Retry button.\n');
+    }
+    process.stdout.write('Press Ctrl+C to stop.\n');
     return;
   }
 

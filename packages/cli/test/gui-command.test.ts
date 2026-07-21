@@ -3,7 +3,7 @@ import { createServer, type Server } from 'node:http';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createGuiHandler, type GuiCache } from '../src/commands/gui.js';
+import { createGuiHandler, runGui, listenWithRetry, type GuiCache, type GuiDeps } from '../src/commands/gui.js';
 import type { GuiState } from 'headcore-core';
 
 function state(over: Partial<GuiState> = {}): GuiState {
@@ -12,6 +12,13 @@ function state(over: Partial<GuiState> = {}): GuiState {
     routes: [], registry: [], dictionaryCount: 0, ...over,
   };
 }
+
+const config = {
+  edge: { endpoint: 'https://e', apiKey: 'k', site: 's', defaultLanguage: 'en' },
+  componentPath: 'src/components', componentFolder: false, componentPropsImport: 'lib/component-props',
+  sitecorePackage: '@sitecore-content-sdk/nextjs', useDatasourceCheck: true, generateMocks: true,
+  styling: 'none', fieldTypeOverrides: {}, i18nPath: 'src/lib/i18n', i18nPackage: 'next-localization',
+};
 
 const servers: Server[] = [];
 const tmpDirs: string[] = [];
@@ -158,5 +165,93 @@ describe('createGuiHandler static serving', () => {
     const res = await fetch(`${url}/`);
     expect(res.status).toBe(404);
     expect((await res.json()).errors[0]).toMatch(/assets missing/);
+  });
+});
+
+describe('listenWithRetry', () => {
+  it('skips a busy port and binds the next free one', async () => {
+    const blocker = createServer(() => {});
+    servers.push(blocker);
+    await new Promise<void>((res) => blocker.listen(0, '127.0.0.1', res));
+    const busy = (blocker.address() as { port: number }).port;
+
+    const server = createServer(() => {});
+    servers.push(server);
+    const port = await listenWithRetry(server, busy);
+    expect(port).toBeGreaterThan(busy);
+    expect(port).toBeLessThanOrEqual(busy + 9);
+  });
+});
+
+describe('runGui', () => {
+  function guiDeps(over: Partial<GuiDeps> = {}): Partial<GuiDeps> {
+    return {
+      loadConfig: vi.fn().mockResolvedValue(config),
+      fetchState: vi.fn().mockResolvedValue(state()),
+      openBrowser: vi.fn(),
+      distDir: distDir(),
+      ...over,
+    };
+  }
+
+  it('fetches initial state with the config default language and serves it', async () => {
+    const deps = guiDeps();
+    const result = await runGui({ lang: undefined, port: undefined, noOpen: true }, { ...deps, basePort: 0 });
+    servers.push(result.server);
+
+    expect(deps.fetchState).toHaveBeenCalledWith(config, 'en');
+    expect(result.initialErrors).toEqual([]);
+    const body = await (await fetch(`${result.url}/api/state`)).json();
+    expect(body.ok).toBe(true);
+  });
+
+  it('opens the browser unless --no-open', async () => {
+    const opened = guiDeps();
+    const r1 = await runGui({ lang: undefined, port: undefined, noOpen: false }, { ...opened, basePort: 0 });
+    servers.push(r1.server);
+    expect(opened.openBrowser).toHaveBeenCalledWith(r1.url);
+
+    const suppressed = guiDeps();
+    const r2 = await runGui({ lang: undefined, port: undefined, noOpen: true }, { ...suppressed, basePort: 0 });
+    servers.push(r2.server);
+    expect(suppressed.openBrowser).not.toHaveBeenCalled();
+  });
+
+  it('starts the server even when the initial fetch fails, and Retry works', async () => {
+    const deps = guiDeps({
+      fetchState: vi.fn()
+        .mockRejectedValueOnce(new Error('HTTP 401'))
+        .mockResolvedValueOnce(state()),
+    });
+    const result = await runGui({ lang: undefined, port: undefined, noOpen: true }, { ...deps, basePort: 0 });
+    servers.push(result.server);
+
+    expect(result.initialErrors).toEqual(['HTTP 401']);
+    expect((await (await fetch(`${result.url}/api/state`)).json()).ok).toBe(false);
+
+    const retried = await (await fetch(`${result.url}/api/refresh`, { method: 'POST' })).json();
+    expect(retried.ok).toBe(true);
+    expect((await (await fetch(`${result.url}/api/state`)).json()).ok).toBe(true);
+  });
+
+  it('a lang refresh switches the current language for subsequent refreshes', async () => {
+    const deps = guiDeps();
+    const result = await runGui({ lang: undefined, port: undefined, noOpen: true }, { ...deps, basePort: 0 });
+    servers.push(result.server);
+
+    await fetch(`${result.url}/api/refresh`, {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ lang: 'da' }),
+    });
+    expect(deps.fetchState).toHaveBeenLastCalledWith(config, 'da');
+
+    await fetch(`${result.url}/api/refresh`, { method: 'POST' });
+    expect(deps.fetchState).toHaveBeenLastCalledWith(config, 'da');
+  });
+
+  it('honors an explicit --lang over the config default', async () => {
+    const deps = guiDeps();
+    const result = await runGui({ lang: 'pl', port: undefined, noOpen: true }, { ...deps, basePort: 0 });
+    servers.push(result.server);
+    expect(deps.fetchState).toHaveBeenCalledWith(config, 'pl');
   });
 });
