@@ -2,6 +2,7 @@ import type { GuiRouteDetail, GuiRegistryEntry } from './types';
 
 export interface ComponentUsage {
   name: string;
+  /** Number of routes containing this component (each route counted once, however many instances it has). */
   count: number;
   routes: string[];
   inRegistry: boolean;
@@ -98,7 +99,13 @@ export function freshness(routes: GuiRouteDetail[], today: Date): FreshnessBucke
       buckets.unknown++;
       continue;
     }
-    const days = Math.floor((today.getTime() - new Date(`${r.updatedAt}T00:00:00Z`).getTime()) / 86_400_000);
+    const ms = new Date(`${r.updatedAt}T00:00:00Z`).getTime();
+    const days = Math.floor((today.getTime() - ms) / 86_400_000);
+    // Malformed dates (NaN) and future dates are data anomalies, not freshness signals.
+    if (Number.isNaN(days) || days < 0) {
+      buckets.unknown++;
+      continue;
+    }
     if (days <= 7) buckets.week++;
     else if (days <= 30) buckets.month++;
     else if (days <= 90) buckets.quarter++;

@@ -69,4 +69,23 @@ describe('freshness', () => {
     ], today);
     expect(buckets).toEqual({ week: 1, month: 1, quarter: 1, older: 1, unknown: 1 });
   });
+
+  it('sends malformed and future dates to unknown', () => {
+    const today = new Date('2026-07-21T00:00:00Z');
+    const buckets = freshness([
+      route('/x', [], 'not-a-date'),
+      route('/y', [], '2026-08-01'), // future
+    ], today);
+    expect(buckets).toEqual({ week: 0, month: 0, quarter: 0, older: 0, unknown: 2 });
+  });
+
+  it('buckets exact boundary ages inclusively', () => {
+    const today = new Date('2026-07-21T00:00:00Z');
+    const buckets = freshness([
+      route('/w', [], '2026-07-14'), // exactly 7 days → week
+      route('/m', [], '2026-06-21'), // exactly 30 days → month
+      route('/q', [], '2026-04-22'), // exactly 90 days → quarter
+    ], today);
+    expect(buckets).toEqual({ week: 1, month: 1, quarter: 1, older: 0, unknown: 0 });
+  });
 });
