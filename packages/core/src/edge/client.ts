@@ -197,11 +197,15 @@ export class EdgeClient {
         if (!r.routePath) continue;
         let components: string[] = [];
         let layout: GuiRouteDetail['layout'] = {};
+        let itemId: string | undefined;
+        let routeFields: GuiRouteDetail['routeFields'];
         if (r.route?.rendered) {
           try {
             const tree = parseLayout(r.route.rendered, r.routePath);
             components = collectComponentNames(tree);
             layout = trimPlaceholders(tree.placeholders);
+            itemId = tree.itemId;
+            routeFields = tree.fields;
           } catch {
             // malformed rendered payload → empty structure, same policy as componentsFromRendered
           }
@@ -210,6 +214,8 @@ export class EdgeClient {
           routePath: r.routePath,
           name: r.route?.name ?? '',
           updatedAt: normalizeUpdated(r.route?.updated?.value),
+          ...(itemId !== undefined ? { itemId } : {}),
+          ...(routeFields !== undefined ? { routeFields } : {}),
           components,
           layout,
         });

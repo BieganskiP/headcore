@@ -30,4 +30,29 @@ describe('parseLayout', () => {
   it('throws on missing route', () => {
     expect(() => parseLayout({ sitecore: { route: null } }, '/x')).toThrow(/no route/i);
   });
+
+  it('captures the route itemId and route-level fields when present', () => {
+    const tree = parseLayout({
+      sitecore: {
+        route: {
+          itemId: '11111111-2222-3333-4444-555555555555',
+          fields: { pageTitle: { value: 'About us' }, metaDescription: { value: 'Who we are' } },
+          placeholders: {},
+        },
+      },
+    }, '/about-us');
+    expect(tree.itemId).toBe('11111111-2222-3333-4444-555555555555');
+    expect(tree.fields).toEqual({ pageTitle: { value: 'About us' }, metaDescription: { value: 'Who we are' } });
+  });
+
+  it('omits itemId and fields when absent or malformed', () => {
+    const tree = parseLayout({ sitecore: { route: { itemId: 42, fields: null, placeholders: {} } } }, '/x');
+    expect(tree).not.toHaveProperty('itemId');
+    expect(tree).not.toHaveProperty('fields');
+  });
+
+  it('keeps working on the fixture without route-level extras', () => {
+    const tree = parseLayout(raw, '/about-us');
+    expect(tree.placeholders['headless-main'].length).toBeGreaterThan(0);
+  });
 });

@@ -59,6 +59,39 @@ describe('loadConfig', () => {
     await expect(loadConfig(join(dir, 'missing.config.ts'))).rejects.toThrow(/not found/i);
   });
 
+  it('passes a valid gui section through and omits it when unset', async () => {
+    const base = `componentPath: 'src/components', componentPropsImport: 'lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs', useDatasourceCheck: true, generateMocks: true, fieldTypeOverrides: {},`;
+    const withGui = writeConfig(dir, `export default {
+      edge: { endpoint: process.env.SITECORE_EDGE_URL, apiKey: process.env.SITECORE_EDGE_TOKEN, site: 's', defaultLanguage: 'en' },
+      gui: { editUrlTemplate: 'https://pages.example/editor?sc_itemid={itemId}&sc_lang={lang}', siteBaseUrl: 'https://www.example.com' },
+      ${base}
+    };`);
+    const cfg = await loadConfig(withGui);
+    expect(cfg.gui).toEqual({
+      editUrlTemplate: 'https://pages.example/editor?sc_itemid={itemId}&sc_lang={lang}',
+      siteBaseUrl: 'https://www.example.com',
+    });
+
+    // Separate filename: jiti caches modules by path.
+    const without = join(dir, 'no-gui.config.ts');
+    writeFileSync(without, `export default {
+      edge: { endpoint: process.env.SITECORE_EDGE_URL, apiKey: process.env.SITECORE_EDGE_TOKEN, site: 's', defaultLanguage: 'en' },
+      ${base}
+    };`, 'utf8');
+    expect((await loadConfig(without)).gui).toBeUndefined();
+  });
+
+  it('throws when gui.editUrlTemplate is empty', async () => {
+    const p = writeConfig(dir, `export default {
+      edge: { endpoint: process.env.SITECORE_EDGE_URL, apiKey: process.env.SITECORE_EDGE_TOKEN, site: 's', defaultLanguage: 'en' },
+      gui: { editUrlTemplate: '' },
+      componentPath: 'src/components', componentPropsImport: 'lib/component-props',
+      sitecorePackage: '@sitecore-content-sdk/nextjs', useDatasourceCheck: true, generateMocks: true, fieldTypeOverrides: {},
+    };`);
+    await expect(loadConfig(p)).rejects.toThrow(/gui\.editUrlTemplate/);
+  });
+
   it('defaults i18nPath and i18nPackage when not specified', async () => {
     const p = writeConfig(dir, `export default {
     edge: { endpoint: process.env.SITECORE_EDGE_URL, apiKey: process.env.SITECORE_EDGE_TOKEN, site: 'my-site', defaultLanguage: 'en' },

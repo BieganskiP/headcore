@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { GuiState } from '../lib/types';
 import type { View } from '../lib/router';
 import { usageCounts, registryCoverage } from '../lib/analytics';
+import { downloadCsv } from '../lib/export';
 import { Badge } from '../components/Badge';
 import { ComponentDetailView } from './ComponentDetailView';
 
@@ -33,6 +34,19 @@ export function ComponentsView({ state, selected, navigate }: { state: GuiState;
           aria-label="Filter components"
           className="ml-auto w-64 rounded border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700"
         />
+        <button
+          type="button"
+          className="rounded border border-slate-300 px-2 py-1 text-sm focus-visible:ring-2 focus-visible:ring-sky-400 disabled:opacity-50 dark:border-slate-700"
+          disabled={filtered.length === 0}
+          title="Download the filtered usage table as CSV"
+          onClick={() => downloadCsv(
+            `components-${state.site}-${state.language}.csv`,
+            ['component', 'routes', 'in_registry', 'route_paths'],
+            filtered.map((u) => [u.name, String(u.count), u.inRegistry ? 'yes' : 'no', u.routes.join('; ')]),
+          )}
+        >
+          CSV
+        </button>
       </div>
 
       <table className="mb-8 w-full text-left text-sm">
@@ -45,7 +59,7 @@ export function ComponentsView({ state, selected, navigate }: { state: GuiState;
         </thead>
         <tbody>
           {filtered.map((u) => (
-            <tr key={u.name} className="border-b border-slate-100 dark:border-slate-900">
+            <tr key={u.name} className="border-b border-slate-100 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/50">
               <td className="py-1.5 pr-4">
                 <button
                   type="button"
@@ -56,9 +70,11 @@ export function ComponentsView({ state, selected, navigate }: { state: GuiState;
                 </button>
                 {u.inRegistry && <span className="ml-2"><Badge tone="green">registry</Badge></span>}
               </td>
-              <td className="py-1.5 pr-4">{u.count}</td>
+              <td className="py-1.5 pr-4 font-mono text-xs tabular-nums">{u.count}</td>
               <td className="py-1.5">
-                <div aria-hidden="true" className="h-2 rounded bg-sky-500/80" style={{ width: `${(u.count / max) * 100}%` }} />
+                <div aria-hidden="true" className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800/60">
+                  <div className="h-2 rounded-full bg-gradient-to-r from-sky-500 to-sky-400" style={{ width: `${(u.count / max) * 100}%` }} />
+                </div>
               </td>
             </tr>
           ))}
@@ -73,7 +89,7 @@ export function ComponentsView({ state, selected, navigate }: { state: GuiState;
           {state.registry.map((entry) => {
             const used = usedNames.has(entry.name);
             return (
-              <li key={entry.name} className="rounded border border-slate-200 p-3 dark:border-slate-800">
+              <li key={entry.name} className="rounded-xl border border-slate-200 bg-white/60 p-3 dark:border-slate-800 dark:bg-slate-900/40">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"

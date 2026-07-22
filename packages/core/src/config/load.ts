@@ -3,7 +3,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { config as loadEnvFiles } from 'dotenv';
 import { resolveStorybook } from './storybook.js';
-import type { HeadcoreConfig, StorybookConfig } from '../types.js';
+import type { GuiLinksConfig, HeadcoreConfig, StorybookConfig } from '../types.js';
 
 const REQUIRED_STRING_FIELDS: Array<keyof HeadcoreConfig> = [
   'componentPath',
@@ -83,8 +83,26 @@ export async function loadConfig(path: string): Promise<HeadcoreConfig> {
     }
   }
 
+  const gui = loaded.gui as Partial<GuiLinksConfig> | undefined;
+  if (gui !== undefined) {
+    assert(typeof gui === 'object' && gui !== null, 'Config "gui" must be an object');
+    if (gui.editUrlTemplate !== undefined) {
+      assert(
+        typeof gui.editUrlTemplate === 'string' && gui.editUrlTemplate.length > 0,
+        'Config "gui.editUrlTemplate" must be a non-empty string',
+      );
+    }
+    if (gui.siteBaseUrl !== undefined) {
+      assert(
+        typeof gui.siteBaseUrl === 'string' && gui.siteBaseUrl.length > 0,
+        'Config "gui.siteBaseUrl" must be a non-empty string',
+      );
+    }
+  }
+
   return {
     edge: loaded.edge,
+    ...(gui !== undefined ? { gui } : {}),
     componentPath: loaded.componentPath!,
     componentFolder: loaded.componentFolder ?? true,
     componentPropsImport: loaded.componentPropsImport!,

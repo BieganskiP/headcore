@@ -43,6 +43,7 @@ export {
   trimPlaceholders,
   manifestToRegistryEntry,
   assembleGuiState,
+  snapshotMeta,
 } from './gui/state.js';
 export type {
   GuiLayoutNode,
@@ -50,4 +51,5 @@ export type {
   GuiRegistryEntry,
   GuiState,
   GuiStateSources,
+  GuiSnapshotMeta,
 } from './gui/state.js';

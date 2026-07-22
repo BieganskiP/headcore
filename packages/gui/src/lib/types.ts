@@ -1,1 +1,10 @@
-export type { GuiState, GuiRouteDetail, GuiLayoutNode, GuiRegistryEntry, DictionaryEntry } from 'headcore-core';
+export type {
+  GuiState,
+  GuiRouteDetail,
+  GuiLayoutNode,
+  GuiRegistryEntry,
+  GuiSnapshotMeta,
+  GuiLinksConfig,
+  DictionaryEntry,
+  RouteInfo,
+} from 'headcore-core';

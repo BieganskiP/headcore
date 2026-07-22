@@ -115,6 +115,93 @@ describe('createGuiHandler /api', () => {
     expect(res.status).toBe(400);
   });
 
+  it('serves a second-language dictionary without touching the cache', async () => {
+    const cache: GuiCache = { state: state(), errors: [], loading: false };
+    const fetchDictionary = vi.fn().mockResolvedValue([{ key: 'nav/home', value: 'Hjem' }]);
+    const url = await serve(createGuiHandler(cache, vi.fn(), distDir(), { fetchDictionary }));
+
+    const body = await (await fetch(`${url}/api/dictionary?lang=da`)).json();
+    expect(fetchDictionary).toHaveBeenCalledWith('da');
+    expect(body).toEqual({ ok: true, language: 'da', entries: [{ key: 'nav/home', value: 'Hjem' }] });
+    expect(cache.state).toEqual(state());
+  });
+
+  it('reports a dictionary fetch failure without failing the request', async () => {
+    const fetchDictionary = vi.fn().mockRejectedValue(new Error('edge down'));
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir(), { fetchDictionary }));
+    const res = await fetch(`${url}/api/dictionary?lang=da`);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: false, errors: ['edge down'] });
+  });
+
+  it('rejects a dictionary request without lang', async () => {
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir(), { fetchDictionary: vi.fn() }));
+    expect((await fetch(`${url}/api/dictionary`)).status).toBe(400);
+    expect((await fetch(`${url}/api/dictionary?lang=%20`)).status).toBe(400);
+  });
+
+  it('serves a second-language route list without touching the cache', async () => {
+    const cache: GuiCache = { state: state(), errors: [], loading: false };
+    const routes = [{ routePath: '/', name: 'Home', updatedAt: '2026-07-01' }];
+    const fetchRoutes = vi.fn().mockResolvedValue(routes);
+    const url = await serve(createGuiHandler(cache, vi.fn(), distDir(), { fetchRoutes }));
+
+    const body = await (await fetch(`${url}/api/routes?lang=da`)).json();
+    expect(fetchRoutes).toHaveBeenCalledWith('da');
+    expect(body).toEqual({ ok: true, language: 'da', routes });
+    expect(cache.state).toEqual(state());
+  });
+
+  it('reports a routes fetch failure without failing the request', async () => {
+    const fetchRoutes = vi.fn().mockRejectedValue(new Error('edge down'));
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir(), { fetchRoutes }));
+    const res = await fetch(`${url}/api/routes?lang=da`);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ok: false, errors: ['edge down'] });
+  });
+
+  it('rejects a routes request without lang and 404s when unwired', async () => {
+    const withRoutes = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir(), { fetchRoutes: vi.fn() }));
+    expect((await fetch(`${withRoutes}/api/routes`)).status).toBe(400);
+    const without = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir()));
+    expect((await fetch(`${without}/api/routes?lang=da`)).status).toBe(404);
+  });
+
+  it('lists and serves history snapshots, 404s unknown ids', async () => {
+    const meta = { id: 'snap-1', fetchedAt: '2026-07-21T10:00:00.000Z', site: 's', language: 'en', routes: 0, renderings: 0, components: 0, dictionaryEntries: 0 };
+    const history = {
+      list: vi.fn().mockResolvedValue([meta]),
+      load: vi.fn().mockImplementation((id: string) => Promise.resolve(id === 'snap-1' ? state() : null)),
+      save: vi.fn(),
+    };
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir(), { history }));
+
+    expect(await (await fetch(`${url}/api/history`)).json()).toEqual({ ok: true, snapshots: [meta] });
+    expect(await (await fetch(`${url}/api/history/snap-1`)).json()).toEqual({ ok: true, state: state() });
+    expect((await fetch(`${url}/api/history/nope`)).status).toBe(404);
+  });
+
+  it('404s history endpoints when persistence is disabled', async () => {
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir()));
+    expect((await fetch(`${url}/api/history`)).status).toBe(404);
+    expect((await fetch(`${url}/api/history/x`)).status).toBe(404);
+  });
+
+  it('saves a snapshot on successful refresh and survives a failing save', async () => {
+    const next = state();
+    const history = { list: vi.fn(), load: vi.fn(), save: vi.fn().mockRejectedValue(new Error('disk full')) };
+    const url = await serve(createGuiHandler(
+      { state: null, errors: [], loading: false },
+      vi.fn().mockResolvedValue(next),
+      distDir(),
+      { history },
+    ));
+
+    const body = await (await fetch(`${url}/api/refresh`, { method: 'POST' })).json();
+    expect(history.save).toHaveBeenCalledWith(next);
+    expect(body).toEqual({ ok: true, state: next });
+  });
+
   it('returns JSON 404 for unknown api endpoints', async () => {
     const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir()));
     const res = await fetch(`${url}/api/nope`);
@@ -197,6 +284,7 @@ describe('runGui', () => {
       fetchState: vi.fn().mockResolvedValue(state()),
       openBrowser: vi.fn(),
       distDir: distDir(),
+      historyDir: null,
       ...over,
     };
   }
@@ -274,6 +362,45 @@ describe('runGui', () => {
 
     await fetch(`${result.url}/api/refresh`, { method: 'POST' });
     expect(deps.fetchState).toHaveBeenLastCalledWith(config, 'da');
+  });
+
+  it('wires the dictionary endpoint to the loaded config', async () => {
+    const fetchDictionary = vi.fn().mockResolvedValue([]);
+    const deps = guiDeps({ fetchDictionary });
+    const result = await runGui({ lang: undefined, port: undefined, noOpen: true }, { ...deps, basePort: 0 });
+    servers.push(result.server);
+
+    const body = await (await fetch(`${result.url}/api/dictionary?lang=fr`)).json();
+    expect(fetchDictionary).toHaveBeenCalledWith(config, 'fr');
+    expect(body).toEqual({ ok: true, language: 'fr', entries: [] });
+  });
+
+  it('wires the routes endpoint to the loaded config', async () => {
+    const fetchRoutes = vi.fn().mockResolvedValue([]);
+    const deps = guiDeps({ fetchRoutes });
+    const result = await runGui({ lang: undefined, port: undefined, noOpen: true }, { ...deps, basePort: 0 });
+    servers.push(result.server);
+
+    const body = await (await fetch(`${result.url}/api/routes?lang=fr`)).json();
+    expect(fetchRoutes).toHaveBeenCalledWith(config, 'fr');
+    expect(body).toEqual({ ok: true, language: 'fr', routes: [] });
+  });
+
+  it('persists the initial fetch to the history dir and serves it back', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gui-history-'));
+    tmpDirs.push(dir);
+    const deps = guiDeps({ historyDir: dir });
+    const result = await runGui({ lang: undefined, port: undefined, noOpen: true }, { ...deps, basePort: 0 });
+    servers.push(result.server);
+    await result.ready;
+
+    const list = await (await fetch(`${result.url}/api/history`)).json();
+    expect(list.ok).toBe(true);
+    expect(list.snapshots).toHaveLength(1);
+    expect(list.snapshots[0]).toMatchObject({ site: 's', language: 'en', routes: 0 });
+
+    const snap = await (await fetch(`${result.url}/api/history/${list.snapshots[0].id}`)).json();
+    expect(snap).toEqual({ ok: true, state: state() });
   });
 
   it('honors an explicit --lang over the config default', async () => {

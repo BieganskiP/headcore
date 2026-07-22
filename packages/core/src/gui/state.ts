@@ -1,4 +1,4 @@
-import type { RawFieldValue, RenderingNode } from '../types.js';
+import type { GuiLinksConfig, RawFieldValue, RenderingNode } from '../types.js';
 import type { ComponentManifest, SitecorePlaceholder } from '../registry/manifest.js';
 import type { DictionaryEntry } from '../edge/client.js';
 
@@ -14,6 +14,10 @@ export interface GuiRouteDetail {
   routePath: string;
   name: string;
   updatedAt: string | null;
+  /** Sitecore item id of the route, when the layout payload carries one. */
+  itemId?: string;
+  /** Route-level (page) fields, e.g. page title / meta description. */
+  routeFields?: Record<string, RawFieldValue>;
   /** Unique component names on the page, depth-first. */
   components: string[];
   /** Mirrors RenderingTree.placeholders: top-level placeholder key → nodes. */
@@ -39,8 +43,48 @@ export interface GuiState {
   routes: GuiRouteDetail[];
   registry: GuiRegistryEntry[];
   dictionary: DictionaryEntry[];
+  /** Deep-link settings from the config's `gui` section, when present. */
+  links?: GuiLinksConfig;
   /** Partial-failure notes (e.g. dictionary query failed). */
   errors?: string[];
+}
+
+export interface GuiSnapshotMeta {
+  id: string;
+  fetchedAt: string;
+  site: string;
+  language: string;
+  /** Route count in the snapshot. */
+  routes: number;
+  /** Total renderings across all routes, nested included. */
+  renderings: number;
+  /** Distinct component names across all routes. */
+  components: number;
+  dictionaryEntries: number;
+}
+
+/** Summary metrics for a stored snapshot — what history lists and trend charts consume. */
+export function snapshotMeta(state: GuiState, id: string): GuiSnapshotMeta {
+  let renderings = 0;
+  const walk = (nodes: GuiLayoutNode[]): void => {
+    for (const n of nodes) {
+      renderings++;
+      for (const children of Object.values(n.placeholders)) walk(children);
+    }
+  };
+  for (const route of state.routes) {
+    for (const top of Object.values(route.layout)) walk(top);
+  }
+  return {
+    id,
+    fetchedAt: state.fetchedAt,
+    site: state.site,
+    language: state.language,
+    routes: state.routes.length,
+    renderings,
+    components: new Set(state.routes.flatMap((r) => r.components)).size,
+    dictionaryEntries: state.dictionary.length,
+  };
 }
 
 /** Trim a parsed layout to what the GUI needs: names, dataSource, fields (params are dropped). */
@@ -75,6 +119,8 @@ export interface GuiStateSources {
   routes: () => Promise<GuiRouteDetail[]>;
   dictionary: () => Promise<DictionaryEntry[]>;
   registry: GuiRegistryEntry[];
+  /** Deep-link settings surfaced to the GUI as state.links. */
+  links?: GuiLinksConfig;
   /** Injectable clock for tests. */
   now?: () => Date;
 }
@@ -100,6 +146,7 @@ export async function assembleGuiState(src: GuiStateSources): Promise<GuiState> 
     routes,
     registry: src.registry,
     dictionary,
+    ...(src.links !== undefined ? { links: src.links } : {}),
     ...(errors.length > 0 ? { errors } : {}),
   };
 }

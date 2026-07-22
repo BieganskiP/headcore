@@ -2,8 +2,71 @@ import { useMemo } from 'react';
 import type { GuiState, GuiLayoutNode } from '../lib/types';
 import type { View } from '../lib/router';
 import { componentInstances, type RouteInstances } from '../lib/analytics';
+import { fieldFillRates, type FieldFillRate } from '../lib/fillRate';
 import { Badge } from '../components/Badge';
 import { FieldsTable } from '../components/FieldsTable';
+
+const EMPTY_INSTANCE_LIMIT = 10;
+
+function FillBar({ pct }: { pct: number }) {
+  const tone = pct >= 90 ? 'bg-emerald-500' : pct >= 50 ? 'bg-sky-500' : 'bg-amber-500';
+  return (
+    <div aria-hidden="true" className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800/60">
+      <div className={`h-1.5 rounded-full ${tone}`} style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+function FieldFillSection({ rates, navigate }: { rates: FieldFillRate[]; navigate: (v: View) => void }) {
+  return (
+    <section className="mb-6">
+      <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        Field fill
+      </h2>
+      <div className="space-y-2">
+        {rates.map((r) => (
+          <div key={r.field}>
+            <div className="flex items-center gap-3">
+              <span className="w-40 shrink-0 truncate font-mono text-xs" title={r.field}>{r.field}</span>
+              <FillBar pct={r.pct} />
+              <span className="w-28 shrink-0 text-right text-xs text-slate-500 dark:text-slate-400">
+                filled {r.filled}/{r.total} ({r.pct}%)
+              </span>
+            </div>
+            {/* emptyOn, not pct < 100: rounding can show 100% while instances are still unfilled. */}
+            {r.emptyOn.length > 0 && (
+              <details className="mt-0.5 pl-4">
+                <summary className="cursor-pointer text-xs text-slate-400 hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-slate-500 dark:hover:text-slate-300">
+                  empty on {r.emptyOn.length} instance{r.emptyOn.length === 1 ? '' : 's'}
+                </summary>
+                <ul className="mt-1 space-y-0.5">
+                  {r.emptyOn.slice(0, EMPTY_INSTANCE_LIMIT).map((e) => (
+                    <li key={`${e.routePath} ${e.path}`} className="text-xs">
+                      <button
+                        type="button"
+                        className="text-sky-600 hover:underline focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-sky-400"
+                        onClick={() => navigate({ view: 'inspector', route: e.routePath })}
+                        title={`Inspect ${e.routePath}`}
+                      >
+                        <code>{e.routePath}</code>
+                      </button>
+                      <span className="ml-2 text-slate-400 dark:text-slate-500">{e.path}</span>
+                    </li>
+                  ))}
+                </ul>
+                {r.emptyOn.length > EMPTY_INSTANCE_LIMIT && (
+                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                    +{r.emptyOn.length - EMPTY_INSTANCE_LIMIT} more
+                  </p>
+                )}
+              </details>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function childSummary(nodes: GuiLayoutNode[]): Array<{ name: string; count: number }> {
   const counts = new Map<string, number>();
@@ -42,7 +105,7 @@ function InstancePlaceholders({ placeholders, navigate }: { placeholders: Record
 function RouteSection({ entry, navigate }: { entry: RouteInstances; navigate: (v: View) => void }) {
   const { route, instances } = entry;
   return (
-    <section className="mb-4 rounded-lg border border-slate-200 p-4 dark:border-slate-800">
+    <section className="mb-4 rounded-xl border border-slate-200 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-900/40">
       <div className="mb-2 flex flex-wrap items-baseline gap-2">
         <button
           type="button"
@@ -74,6 +137,7 @@ function RouteSection({ entry, navigate }: { entry: RouteInstances; navigate: (v
 
 export function ComponentDetailView({ state, component, navigate }: { state: GuiState; component: string; navigate: (v: View) => void }) {
   const perRoute = useMemo(() => componentInstances(state.routes, component), [state.routes, component]);
+  const fillRates = useMemo(() => fieldFillRates(state.routes, component), [state.routes, component]);
   const registryEntry = useMemo(
     () => state.registry.find((r) => r.componentName === component),
     [state.registry, component],
@@ -118,6 +182,8 @@ export function ComponentDetailView({ state, component, navigate }: { state: Gui
           ? `Not rendered on any of the ${state.routes.length} routes of ${state.site} (${state.language}).`
           : `${renderingCount} rendering${renderingCount === 1 ? '' : 's'} on ${perRoute.length} of ${state.routes.length} routes of ${state.site} (${state.language}).`}
       </p>
+
+      {fillRates.length > 0 && <FieldFillSection rates={fillRates} navigate={navigate} />}
 
       {perRoute.length === 0 && !registryEntry && (
         <p className="text-sm text-amber-700 dark:text-amber-400">

@@ -26,8 +26,20 @@ export interface StorybookConfig {
   framework: string;
 }
 
+export interface GuiLinksConfig {
+  /**
+   * URL template for "open in editor" deep links in the GUI. Supports
+   * {itemId}, {lang}, {site}, and {routePath} placeholders.
+   */
+  editUrlTemplate?: string;
+  /** Live site base URL; the GUI appends a route's path for open-page links. */
+  siteBaseUrl?: string;
+}
+
 export interface HeadcoreConfig {
   edge: EdgeConfig;
+  /** Optional GUI deep-link settings (headcore gui). */
+  gui?: GuiLinksConfig;
   componentPath: string;
   /** When true, each component's files go in their own `<componentPath>/<Name>/` folder. */
   componentFolder: boolean;
@@ -59,6 +71,10 @@ export interface RenderingNode {
 
 export interface RenderingTree {
   route: string;
+  /** Sitecore item id of the route, when the layout payload carries one. */
+  itemId?: string;
+  /** Route-level (page) fields from the layout payload, e.g. page title / meta description. */
+  fields?: Record<string, RawFieldValue>;
   placeholders: Record<string, RenderingNode[]>;
 }
 

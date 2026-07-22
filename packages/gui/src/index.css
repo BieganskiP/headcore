@@ -1,1 +1,90 @@
 @import "tailwindcss";
+
+/* Class-based dark mode so the header toggle works; the inline script in
+   index.html applies .dark before first paint (system preference by default). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* IBM Plex: one family for prose and data — the terminal-companion look. */
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', 'Segoe UI Mono', monospace;
+
+  --animate-enter: enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  @keyframes enter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+@layer base {
+  /* Tailwind 4 preflight dropped the pointer cursor on interactive elements. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  select:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body {
+    @apply bg-white text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+    /* Faint sky wash bleeding in from the top right — atmosphere, not decoration. */
+    background-image: radial-gradient(80rem 28rem at 78% -10rem, rgb(14 165 233 / 0.06), transparent 70%);
+    background-attachment: fixed;
+  }
+  .dark body {
+    background-image: radial-gradient(80rem 30rem at 78% -10rem, rgb(56 189 248 / 0.09), transparent 70%);
+  }
+
+  /* Pseudo-elements can't carry the .dark ancestor variant — split the rules. */
+  ::selection {
+    @apply bg-sky-200/80;
+  }
+  .dark ::selection {
+    @apply bg-sky-400/30;
+  }
+
+  button, select, input, summary, a {
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease,
+      opacity 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  /* Slim, quiet scrollbars — the matrix and graph scroll a lot. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(203 213 225) transparent;
+  }
+  .dark * {
+    scrollbar-color: rgb(51 65 85) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+    @apply bg-slate-300;
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-slate-700;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@layer utilities {
+  /* The block cursor after the wordmark. */
+  .cursor-blink {
+    animation: cursor-blink 1.4s steps(1) infinite;
+  }
+  @keyframes cursor-blink {
+    0%, 55% { opacity: 1; }
+    56%, 100% { opacity: 0; }
+  }
+}

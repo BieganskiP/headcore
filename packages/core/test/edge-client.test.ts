@@ -395,6 +395,26 @@ describe('EdgeClient.getRoutesDetailed', () => {
     ]);
   });
 
+  it('captures the route itemId and route-level fields from the rendered payload', async () => {
+    const rendered = {
+      sitecore: {
+        route: {
+          itemId: 'ABCD-1234',
+          fields: { pageTitle: { value: 'Home' } },
+          placeholders: {},
+        },
+      },
+    };
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => page([{ routePath: '/', rendered }], { endCursor: 'C1', hasNext: false }),
+    });
+    const client = new EdgeClient(config, fetchMock as unknown as typeof fetch);
+    const routes = await client.getRoutesDetailed('en');
+    expect(routes[0].itemId).toBe('ABCD-1234');
+    expect(routes[0].routeFields).toEqual({ pageTitle: { value: 'Home' } });
+  });
+
   it('yields empty components and layout for null or malformed rendered', async () => {
     const fetchMock = vi.fn().mockResolvedValueOnce({
       ok: true,

@@ -1,8 +1,27 @@
 import { useMemo, useState } from 'react';
 import type { GuiState, GuiRouteDetail } from '../lib/types';
 import type { View } from '../lib/router';
-import { buildRouteTree, routeCount, type RouteTreeNode } from '../lib/analytics';
+import { buildRouteTree, routeCount, freshnessBucket, type RouteTreeNode, type FreshKey } from '../lib/analytics';
+import { liveUrl, type DeepLinkContext } from '../lib/deepLinks';
+import { downloadCsv } from '../lib/export';
+import { FRESH_META } from '../lib/freshnessMeta';
 import { Badge } from '../components/Badge';
+
+function LivePageLink({ href }: { href: string | null }) {
+  if (href === null) return null;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      title="Open live page"
+      className="font-mono text-xs text-slate-400 hover:text-sky-600 focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-slate-500 dark:hover:text-sky-400"
+      onClick={(e) => e.stopPropagation()}
+    >
+      ↗
+    </a>
+  );
+}
 
 function RouteLink({ route, navigate }: { route: GuiRouteDetail; navigate: (v: View) => void }) {
   return (
@@ -17,7 +36,7 @@ function RouteLink({ route, navigate }: { route: GuiRouteDetail; navigate: (v: V
   );
 }
 
-function TreeNode({ node, navigate, depth }: { node: RouteTreeNode; navigate: (v: View) => void; depth: number }) {
+function TreeNode({ node, navigate, depth, linkCtx }: { node: RouteTreeNode; navigate: (v: View) => void; depth: number; linkCtx: DeepLinkContext }) {
   const [open, setOpen] = useState(depth < 2);
   const count = useMemo(() => routeCount(node), [node]);
 
@@ -33,6 +52,7 @@ function TreeNode({ node, navigate, depth }: { node: RouteTreeNode; navigate: (v
         )}
         <code className="text-sm">{node.segment}</code>
         {node.route && <RouteLink route={node.route} navigate={navigate} />}
+        {node.route && <LivePageLink href={liveUrl(linkCtx, node.route.routePath)} />}
         {node.route && node.route.components.length > 0 && (
           <span className="flex flex-wrap gap-1">
             {node.route.components.map((c) => (
@@ -46,23 +66,25 @@ function TreeNode({ node, navigate, depth }: { node: RouteTreeNode; navigate: (v
       </div>
       {open && node.children.length > 0 && (
         <ul>
-          {node.children.map((c) => <TreeNode key={c.routePath} node={c} navigate={navigate} depth={depth + 1} />)}
+          {node.children.map((c) => <TreeNode key={c.routePath} node={c} navigate={navigate} depth={depth + 1} linkCtx={linkCtx} />)}
         </ul>
       )}
     </li>
   );
 }
 
-export function RoutesView({ state, navigate }: { state: GuiState; navigate: (v: View) => void }) {
+export function RoutesView({ state, fresh, navigate }: { state: GuiState; fresh?: FreshKey; navigate: (v: View) => void }) {
   const [mode, setMode] = useState<'tree' | 'table'>('tree');
   const [filter, setFilter] = useState('');
   const [sort, setSort] = useState<'path' | 'updated'>('path');
 
   const filtered = useMemo(() => {
     const needle = filter.trim().toLowerCase();
-    const matched = needle
+    const today = new Date();
+    let matched = needle
       ? state.routes.filter((r) => r.routePath.toLowerCase().includes(needle) || r.name.toLowerCase().includes(needle))
       : state.routes;
+    if (fresh !== undefined) matched = matched.filter((r) => freshnessBucket(r.updatedAt, today) === fresh);
     return [...matched].sort((a, b) => {
       if (sort === 'updated' && a.updatedAt !== b.updatedAt) {
         if (a.updatedAt === null) return 1;
@@ -71,15 +93,27 @@ export function RoutesView({ state, navigate }: { state: GuiState; navigate: (v:
       }
       return a.routePath.localeCompare(b.routePath);
     });
-  }, [state.routes, filter, sort]);
+  }, [state.routes, filter, sort, fresh]);
 
   const tree = useMemo(() => buildRouteTree(filtered), [filtered]);
+  const linkCtx: DeepLinkContext = { links: state.links, site: state.site, language: state.language };
 
   return (
     <div>
       <div className="mb-4 flex items-center gap-3">
         <h1 className="text-xl font-semibold">Routes</h1>
         <span className="text-sm text-slate-500 dark:text-slate-400">{filtered.length} of {state.routes.length}</span>
+        {fresh !== undefined && (
+          <button
+            type="button"
+            onClick={() => navigate({ view: 'routes' })}
+            title="Clear the freshness filter"
+            className="flex items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800 hover:bg-sky-200 focus-visible:ring-2 focus-visible:ring-sky-400 dark:bg-sky-900/50 dark:text-sky-300 dark:hover:bg-sky-900"
+          >
+            updated {FRESH_META.find((m) => m.key === fresh)?.label ?? fresh}
+            <span aria-hidden="true">✕</span>
+          </button>
+        )}
         <input
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
@@ -105,10 +139,23 @@ export function RoutesView({ state, navigate }: { state: GuiState; navigate: (v:
         >
           {mode === 'tree' ? 'Table' : 'Tree'}
         </button>
+        <button
+          type="button"
+          className="rounded border border-slate-300 px-2 py-1 text-sm focus-visible:ring-2 focus-visible:ring-sky-400 disabled:opacity-50 dark:border-slate-700"
+          disabled={filtered.length === 0}
+          title="Download the filtered routes as CSV"
+          onClick={() => downloadCsv(
+            `routes-${state.site}-${state.language}.csv`,
+            ['route', 'name', 'updated', 'components'],
+            filtered.map((r) => [r.routePath, r.name, r.updatedAt ?? '', r.components.join('; ')]),
+          )}
+        >
+          CSV
+        </button>
       </div>
 
       {mode === 'tree' ? (
-        <ul><TreeNode node={tree} navigate={navigate} depth={0} /></ul>
+        <ul><TreeNode node={tree} navigate={navigate} depth={0} linkCtx={linkCtx} /></ul>
       ) : (
         <table className="w-full text-left text-sm">
           <thead>
@@ -121,14 +168,17 @@ export function RoutesView({ state, navigate }: { state: GuiState; navigate: (v:
           </thead>
           <tbody>
             {filtered.map((r) => (
-              <tr key={r.routePath} className="border-b border-slate-100 dark:border-slate-900">
+              <tr key={r.routePath} className="border-b border-slate-100 hover:bg-slate-50 dark:border-slate-900 dark:hover:bg-slate-900/50">
                 <td className="py-1.5 pr-4">
-                  <button type="button" className="text-sky-600 hover:underline focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-sky-400" onClick={() => navigate({ view: 'inspector', route: r.routePath })}>
-                    <code>{r.routePath}</code>
-                  </button>
+                  <span className="flex items-baseline gap-1.5">
+                    <button type="button" className="text-sky-600 hover:underline focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-sky-400" onClick={() => navigate({ view: 'inspector', route: r.routePath })}>
+                      <code>{r.routePath}</code>
+                    </button>
+                    <LivePageLink href={liveUrl(linkCtx, r.routePath)} />
+                  </span>
                 </td>
                 <td className="py-1.5 pr-4">{r.name}</td>
-                <td className="py-1.5 pr-4 text-slate-500 dark:text-slate-400">{r.updatedAt ?? '—'}</td>
+                <td className="py-1.5 pr-4 font-mono text-xs tabular-nums text-slate-500 dark:text-slate-400">{r.updatedAt ?? '—'}</td>
                 <td className="py-1.5">
                   <span className="flex flex-wrap gap-1">
                     {r.components.map((c) => (

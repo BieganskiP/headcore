@@ -1,18 +1,21 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { extname, join, resolve, sep } from 'node:path';
+import { dirname, extname, join, resolve, sep } from 'node:path';
 import { spawn } from 'node:child_process';
 import {
   loadConfig as defaultLoadConfig,
   EdgeClient,
   assembleGuiState,
   manifestToRegistryEntry,
+  type DictionaryEntry,
   type GuiState,
   type HeadcoreConfig,
+  type RouteInfo,
 } from 'headcore-core';
 import { resolveCliConfigPath } from '../config-path.js';
 import { defaultGuiDistDir } from '../gui-dist-path.js';
 import { listComponents } from '../registry.js';
+import { createHistoryStore, type HistoryStore } from './gui-history.js';
 
 export interface GuiCache {
   state: GuiState | null;
@@ -23,6 +26,18 @@ export interface GuiCache {
 }
 
 export type GuiRefresh = (lang?: string) => Promise<GuiState>;
+export type GuiDictionaryFetch = (lang: string) => Promise<DictionaryEntry[]>;
+export type GuiRoutesFetch = (lang: string) => Promise<RouteInfo[]>;
+
+export interface GuiHandlerExtras {
+  /** Read-only dictionary fetch for a second language (dictionary comparison). */
+  fetchDictionary?: GuiDictionaryFetch;
+  /** Read-only route list fetch for another language (localization matrix). */
+  fetchRoutes?: GuiRoutesFetch;
+  /** Snapshot persistence; refreshes are saved and served back via /api/history. */
+  history?: HistoryStore;
+}
+
 type Handler = (req: IncomingMessage, res: ServerResponse) => void;
 
 const MIME: Record<string, string> = {
@@ -77,7 +92,14 @@ async function serveStatic(pathname: string, res: ServerResponse, distDir: strin
   }
 }
 
-export function createGuiHandler(cache: GuiCache, refresh: GuiRefresh, distDir: string): Handler {
+export function createGuiHandler(
+  cache: GuiCache,
+  refresh: GuiRefresh,
+  distDir: string,
+  extras: GuiHandlerExtras = {},
+): Handler {
+  const { fetchDictionary, fetchRoutes, history } = extras;
+
   async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> {
     const url = new URL(req.url ?? '/', 'http://localhost');
     let pathname: string;
@@ -107,12 +129,76 @@ export function createGuiHandler(cache: GuiCache, refresh: GuiRefresh, distDir: 
         const next = await refresh(lang);
         cache.state = next;
         cache.errors = [];
+        if (history) await history.save(next).catch(() => undefined);
         sendJson(res, 200, { ok: true, state: next });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         if (!cache.state) cache.errors = [message];
         sendJson(res, 200, { ok: false, errors: [message] });
       }
+      return;
+    }
+
+    // Read-only dictionary fetch for a second language (dictionary comparison
+    // in the GUI) — does NOT touch the cached state or the current language.
+    if (pathname === '/api/dictionary' && req.method === 'GET') {
+      const lang = url.searchParams.get('lang')?.trim() ?? '';
+      if (lang === '') {
+        sendJson(res, 400, { ok: false, errors: ['missing lang query parameter'] });
+        return;
+      }
+      if (fetchDictionary === undefined) {
+        sendJson(res, 404, { ok: false, errors: ['dictionary endpoint unavailable'] });
+        return;
+      }
+      try {
+        const entries = await fetchDictionary(lang);
+        sendJson(res, 200, { ok: true, language: lang, entries });
+      } catch (err) {
+        sendJson(res, 200, { ok: false, errors: [err instanceof Error ? err.message : String(err)] });
+      }
+      return;
+    }
+
+    // Read-only route list for another language (localization matrix in the
+    // GUI) — like /api/dictionary, it never touches the cached state.
+    if (pathname === '/api/routes' && req.method === 'GET') {
+      const lang = url.searchParams.get('lang')?.trim() ?? '';
+      if (lang === '') {
+        sendJson(res, 400, { ok: false, errors: ['missing lang query parameter'] });
+        return;
+      }
+      if (fetchRoutes === undefined) {
+        sendJson(res, 404, { ok: false, errors: ['routes endpoint unavailable'] });
+        return;
+      }
+      try {
+        const routes = await fetchRoutes(lang);
+        sendJson(res, 200, { ok: true, language: lang, routes });
+      } catch (err) {
+        sendJson(res, 200, { ok: false, errors: [err instanceof Error ? err.message : String(err)] });
+      }
+      return;
+    }
+
+    if (pathname === '/api/history' && req.method === 'GET') {
+      if (history === undefined) {
+        sendJson(res, 404, { ok: false, errors: ['history unavailable'] });
+        return;
+      }
+      sendJson(res, 200, { ok: true, snapshots: await history.list() });
+      return;
+    }
+
+    if (pathname.startsWith('/api/history/') && req.method === 'GET') {
+      if (history === undefined) {
+        sendJson(res, 404, { ok: false, errors: ['history unavailable'] });
+        return;
+      }
+      const id = pathname.slice('/api/history/'.length);
+      const stored = await history.load(id);
+      if (stored === null) sendJson(res, 404, { ok: false, errors: [`unknown snapshot "${id}"`] });
+      else sendJson(res, 200, { ok: true, state: stored });
       return;
     }
 
@@ -180,14 +266,27 @@ export function defaultFetchState(config: HeadcoreConfig, lang: string): Promise
     routes: () => client.getRoutesDetailed(lang),
     dictionary: () => client.getDictionary(lang),
     registry: listComponents().map(manifestToRegistryEntry),
+    ...(config.gui !== undefined ? { links: config.gui } : {}),
   });
+}
+
+export function defaultFetchDictionary(config: HeadcoreConfig, lang: string): Promise<DictionaryEntry[]> {
+  return new EdgeClient(config.edge).getDictionary(lang);
+}
+
+export function defaultFetchRoutes(config: HeadcoreConfig, lang: string): Promise<RouteInfo[]> {
+  return new EdgeClient(config.edge).getRoutes(lang);
 }
 
 export interface GuiDeps {
   loadConfig: typeof defaultLoadConfig;
   fetchState: (config: HeadcoreConfig, lang: string) => Promise<GuiState>;
+  fetchDictionary: (config: HeadcoreConfig, lang: string) => Promise<DictionaryEntry[]>;
+  fetchRoutes: (config: HeadcoreConfig, lang: string) => Promise<RouteInfo[]>;
   openBrowser: (url: string) => void;
   distDir: string;
+  /** Snapshot directory override; null disables history persistence. */
+  historyDir: string | null;
   /** Base port override for tests (0 = OS-assigned). */
   basePort: number;
 }
@@ -213,8 +312,14 @@ export interface GuiResult {
 
 export async function runGui(input: GuiInput, deps?: Partial<GuiDeps>): Promise<GuiResult> {
   const loadConfig = deps?.loadConfig ?? defaultLoadConfig;
-  const config = await loadConfig(resolveCliConfigPath());
+  const configPath = resolveCliConfigPath();
+  const config = await loadConfig(configPath);
   const fetchState = deps?.fetchState ?? defaultFetchState;
+
+  const historyDir = deps?.historyDir !== undefined
+    ? deps.historyDir
+    : join(dirname(configPath), '.headcore', 'history');
+  const history = historyDir === null ? undefined : createHistoryStore(historyDir);
 
   let currentLang = input.lang ?? config.edge.defaultLanguage;
   const refresh: GuiRefresh = async (lang) => {
@@ -229,9 +334,13 @@ export async function runGui(input: GuiInput, deps?: Partial<GuiDeps>): Promise<
   // The Edge fetch can take several seconds; serve the app (with a loading
   // state) and open the browser right away instead of blocking on it.
   const ready: Promise<GuiReady> = refresh()
-    .then((state) => {
-      // A user-triggered refresh may have landed first; the newer result wins.
-      if (cache.state === null) cache.state = state;
+    .then(async (state) => {
+      // A user-triggered refresh may have landed first; the newer result wins
+      // (and was already saved to history by the refresh endpoint).
+      if (cache.state === null) {
+        cache.state = state;
+        if (history) await history.save(state).catch(() => undefined);
+      }
       cache.errors = [];
       return { state: cache.state, errors: [] };
     })
@@ -244,7 +353,18 @@ export async function runGui(input: GuiInput, deps?: Partial<GuiDeps>): Promise<
       cache.loading = false;
     });
 
-  const server = createServer(createGuiHandler(cache, refresh, deps?.distDir ?? defaultGuiDistDir()));
+  const fetchDictionary = deps?.fetchDictionary ?? defaultFetchDictionary;
+  const fetchRoutes = deps?.fetchRoutes ?? defaultFetchRoutes;
+  const server = createServer(createGuiHandler(
+    cache,
+    refresh,
+    deps?.distDir ?? defaultGuiDistDir(),
+    {
+      fetchDictionary: (lang) => fetchDictionary(config, lang),
+      fetchRoutes: (lang) => fetchRoutes(config, lang),
+      history,
+    },
+  ));
   const port = await listenWithRetry(server, input.port ?? deps?.basePort ?? DEFAULT_PORT);
   const url = `http://127.0.0.1:${port}`;
   if (!input.noOpen) (deps?.openBrowser ?? defaultOpenBrowser)(url);

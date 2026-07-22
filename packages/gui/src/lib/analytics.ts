@@ -115,6 +115,100 @@ export function routeCount(node: RouteTreeNode): number {
   return node.children.reduce((acc, c) => acc + (c.route ? 1 : 0) + routeCount(c), 0);
 }
 
+export interface CompositionNode {
+  name: string;
+  /** Shallowest placeholder depth at which the component appears (top level = 0). */
+  depth: number;
+  /** Total renderings across all routes. */
+  instances: number;
+  /** Distinct routes containing the component. */
+  routes: number;
+}
+
+export interface CompositionEdge {
+  parent: string;
+  child: string;
+  /** Total parent→child containments across all routes. */
+  count: number;
+  /** Placeholder keys through which the containment happens, sorted. */
+  placeholders: string[];
+}
+
+export interface Composition {
+  nodes: CompositionNode[];
+  edges: CompositionEdge[];
+}
+
+/**
+ * Aggregate how components nest via placeholders across all route layouts.
+ * Nodes are sorted by depth, then routes desc, then name; edges by parent/child.
+ */
+export function composition(routes: GuiRouteDetail[]): Composition {
+  const nodes = new Map<string, { depth: number; instances: number; routes: Set<string> }>();
+  const edges = new Map<string, { parent: string; child: string; count: number; placeholders: Set<string> }>();
+
+  const visit = (node: GuiLayoutNode, depth: number, routePath: string): void => {
+    const entry = nodes.get(node.componentName) ?? { depth, instances: 0, routes: new Set<string>() };
+    entry.depth = Math.min(entry.depth, depth);
+    entry.instances++;
+    entry.routes.add(routePath);
+    nodes.set(node.componentName, entry);
+    for (const [key, children] of Object.entries(node.placeholders)) {
+      for (const child of children) {
+        // Newline separator: it cannot appear in a Sitecore component name.
+        const id = `${node.componentName}\n${child.componentName}`;
+        const edge = edges.get(id) ?? { parent: node.componentName, child: child.componentName, count: 0, placeholders: new Set<string>() };
+        edge.count++;
+        edge.placeholders.add(key);
+        edges.set(id, edge);
+        visit(child, depth + 1, routePath);
+      }
+    }
+  };
+
+  for (const route of routes) {
+    for (const top of Object.values(route.layout)) {
+      for (const node of top) visit(node, 0, route.routePath);
+    }
+  }
+
+  return {
+    nodes: [...nodes.entries()]
+      .map(([name, n]) => ({ name, depth: n.depth, instances: n.instances, routes: n.routes.size }))
+      .sort((a, b) => a.depth - b.depth || b.routes - a.routes || a.name.localeCompare(b.name)),
+    edges: [...edges.values()]
+      .map((e) => ({ parent: e.parent, child: e.child, count: e.count, placeholders: [...e.placeholders].sort() }))
+      .sort((a, b) => a.parent.localeCompare(b.parent) || a.child.localeCompare(b.child)),
+  };
+}
+
+export interface RouteComplexity {
+  route: GuiRouteDetail;
+  /** Total renderings on the page, nested included. */
+  renderings: number;
+  /** Deepest placeholder nesting (top level = 1, 0 for an empty layout). */
+  maxDepth: number;
+}
+
+/** Per-route rendering count and nesting depth, heaviest first. */
+export function routeComplexity(routes: GuiRouteDetail[]): RouteComplexity[] {
+  return routes
+    .map((route) => {
+      let renderings = 0;
+      let maxDepth = 0;
+      const walk = (nodes: GuiLayoutNode[], depth: number): void => {
+        for (const n of nodes) {
+          renderings++;
+          if (depth > maxDepth) maxDepth = depth;
+          for (const children of Object.values(n.placeholders)) walk(children, depth + 1);
+        }
+      };
+      for (const top of Object.values(route.layout)) walk(top, 1);
+      return { route, renderings, maxDepth };
+    })
+    .sort((a, b) => b.renderings - a.renderings || a.route.routePath.localeCompare(b.route.routePath));
+}
+
 export interface FreshnessBuckets {
   week: number;
   month: number;
@@ -123,24 +217,24 @@ export interface FreshnessBuckets {
   unknown: number;
 }
 
+export type FreshKey = keyof FreshnessBuckets;
+
+export const FRESH_KEYS: FreshKey[] = ['week', 'month', 'quarter', 'older', 'unknown'];
+
+export function freshnessBucket(updatedAt: string | null, today: Date): FreshKey {
+  if (!updatedAt) return 'unknown';
+  const ms = new Date(`${updatedAt}T00:00:00Z`).getTime();
+  const days = Math.floor((today.getTime() - ms) / 86_400_000);
+  // Malformed dates (NaN) and future dates are data anomalies, not freshness signals.
+  if (Number.isNaN(days) || days < 0) return 'unknown';
+  if (days <= 7) return 'week';
+  if (days <= 30) return 'month';
+  if (days <= 90) return 'quarter';
+  return 'older';
+}
+
 export function freshness(routes: GuiRouteDetail[], today: Date): FreshnessBuckets {
   const buckets: FreshnessBuckets = { week: 0, month: 0, quarter: 0, older: 0, unknown: 0 };
-  for (const r of routes) {
-    if (!r.updatedAt) {
-      buckets.unknown++;
-      continue;
-    }
-    const ms = new Date(`${r.updatedAt}T00:00:00Z`).getTime();
-    const days = Math.floor((today.getTime() - ms) / 86_400_000);
-    // Malformed dates (NaN) and future dates are data anomalies, not freshness signals.
-    if (Number.isNaN(days) || days < 0) {
-      buckets.unknown++;
-      continue;
-    }
-    if (days <= 7) buckets.week++;
-    else if (days <= 30) buckets.month++;
-    else if (days <= 90) buckets.quarter++;
-    else buckets.older++;
-  }
+  for (const r of routes) buckets[freshnessBucket(r.updatedAt, today)]++;
   return buckets;
 }

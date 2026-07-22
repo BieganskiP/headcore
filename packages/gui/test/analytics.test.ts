@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { usageCounts, registryCoverage, buildRouteTree, routeCount, freshness, componentInstances } from '../src/lib/analytics';
+import { usageCounts, registryCoverage, buildRouteTree, routeCount, freshness, freshnessBucket, componentInstances, composition, routeComplexity } from '../src/lib/analytics';
 import type { GuiRouteDetail, GuiRegistryEntry, GuiLayoutNode } from '../src/lib/types';
 
 function route(routePath: string, components: string[], updatedAt: string | null = null): GuiRouteDetail {
@@ -85,6 +85,82 @@ describe('buildRouteTree', () => {
   });
 });
 
+describe('composition', () => {
+  it('aggregates containment edges with counts and placeholder keys across routes', () => {
+    const routes: GuiRouteDetail[] = [
+      {
+        ...route('/', ['Tabs', 'Tab']),
+        layout: {
+          main: [
+            layoutNode('Tabs', { placeholders: { 'headcore-tabs': [layoutNode('Tab'), layoutNode('Tab')] } }),
+          ],
+        },
+      },
+      {
+        ...route('/about', ['Tabs', 'Tab', 'Hero']),
+        layout: {
+          main: [
+            layoutNode('Hero'),
+            layoutNode('Tabs', { placeholders: { 'headcore-tabs': [layoutNode('Tab')], other: [layoutNode('Tab')] } }),
+          ],
+        },
+      },
+    ];
+
+    const { nodes, edges } = composition(routes);
+    expect(edges).toEqual([
+      { parent: 'Tabs', child: 'Tab', count: 4, placeholders: ['headcore-tabs', 'other'] },
+    ]);
+    expect(nodes).toEqual([
+      { name: 'Tabs', depth: 0, instances: 2, routes: 2 },
+      { name: 'Hero', depth: 0, instances: 1, routes: 1 },
+      { name: 'Tab', depth: 1, instances: 4, routes: 2 },
+    ]);
+  });
+
+  it('keeps the shallowest depth when a component appears both top-level and nested', () => {
+    const routes: GuiRouteDetail[] = [
+      { ...route('/a', ['Hero']), layout: { main: [layoutNode('Hero')] } },
+      {
+        ...route('/b', ['Card', 'Hero']),
+        layout: { main: [layoutNode('Card', { placeholders: { inner: [layoutNode('Hero')] } })] },
+      },
+    ];
+    const { nodes, edges } = composition(routes);
+    expect(nodes.find((n) => n.name === 'Hero')).toEqual({ name: 'Hero', depth: 0, instances: 2, routes: 2 });
+    expect(edges).toEqual([{ parent: 'Card', child: 'Hero', count: 1, placeholders: ['inner'] }]);
+  });
+
+  it('returns empty results for routes without layouts', () => {
+    expect(composition([route('/', [])])).toEqual({ nodes: [], edges: [] });
+  });
+});
+
+describe('routeComplexity', () => {
+  it('counts every rendering and the deepest nesting, heaviest route first', () => {
+    const routes: GuiRouteDetail[] = [
+      { ...route('/light', ['Hero']), layout: { main: [layoutNode('Hero')] } },
+      {
+        ...route('/heavy', ['Tabs', 'Tab', 'Card']),
+        layout: {
+          main: [
+            layoutNode('Tabs', {
+              placeholders: { tabs: [layoutNode('Tab', { placeholders: { inner: [layoutNode('Card')] } }), layoutNode('Tab')] },
+            }),
+          ],
+        },
+      },
+      route('/empty', []),
+    ];
+
+    expect(routeComplexity(routes).map((c) => ({ path: c.route.routePath, renderings: c.renderings, maxDepth: c.maxDepth }))).toEqual([
+      { path: '/heavy', renderings: 4, maxDepth: 3 },
+      { path: '/light', renderings: 1, maxDepth: 1 },
+      { path: '/empty', renderings: 0, maxDepth: 0 },
+    ]);
+  });
+});
+
 describe('freshness', () => {
   it('buckets updatedAt by age', () => {
     const today = new Date('2026-07-21T00:00:00Z');
@@ -105,6 +181,14 @@ describe('freshness', () => {
       route('/y', [], '2026-08-01'), // future
     ], today);
     expect(buckets).toEqual({ week: 0, month: 0, quarter: 0, older: 0, unknown: 2 });
+  });
+
+  it('exposes the single-route bucket used by the routes freshness filter', () => {
+    const today = new Date('2026-07-21T00:00:00Z');
+    expect(freshnessBucket('2026-07-20', today)).toBe('week');
+    expect(freshnessBucket('2024-01-01', today)).toBe('older');
+    expect(freshnessBucket(null, today)).toBe('unknown');
+    expect(freshnessBucket('2027-01-01', today)).toBe('unknown');
   });
 
   it('buckets exact boundary ages inclusively', () => {
