@@ -2,8 +2,10 @@ import { useMemo } from 'react';
 import type { GuiState, GuiLayoutNode } from '../lib/types';
 import type { View } from '../lib/router';
 import { Badge } from '../components/Badge';
+import { FieldsTable } from '../components/FieldsTable';
 
 function LayoutNode({ node, navigate }: { node: GuiLayoutNode; navigate: (v: View) => void }) {
+  const fieldCount = Object.keys(node.fields).length;
   return (
     <li className="mt-1">
       <div className="flex flex-wrap items-center gap-2">
@@ -18,10 +20,17 @@ function LayoutNode({ node, navigate }: { node: GuiLayoutNode; navigate: (v: Vie
         {node.dataSource && (
           <code className="text-xs text-slate-400 dark:text-slate-500" title="dataSource">{node.dataSource}</code>
         )}
-        {node.fieldNames.length > 0 && (
-          <span className="text-xs text-slate-500 dark:text-slate-400">fields: {node.fieldNames.join(', ')}</span>
-        )}
       </div>
+      {fieldCount > 0 && (
+        <details className="mt-0.5">
+          <summary className="cursor-pointer text-xs text-slate-500 focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-slate-400">
+            {fieldCount} field{fieldCount === 1 ? '' : 's'}: {Object.keys(node.fields).join(', ')}
+          </summary>
+          <div className="ml-4 mt-1">
+            <FieldsTable fields={node.fields} />
+          </div>
+        </details>
+      )}
       <PlaceholderList placeholders={node.placeholders} navigate={navigate} />
     </li>
   );

@@ -4,7 +4,8 @@ export type View =
   | { view: 'overview' }
   | { view: 'routes' }
   | { view: 'components'; component?: string }
-  | { view: 'inspector'; route?: string };
+  | { view: 'inspector'; route?: string }
+  | { view: 'dictionary' };
 
 export function parseHash(hash: string): View {
   const stripped = hash.replace(/^#\/?/, '');
@@ -13,20 +14,23 @@ export function parseHash(hash: string): View {
   const query = qIdx === -1 ? '' : stripped.slice(qIdx + 1);
   const params = new URLSearchParams(query);
   if (path === 'routes') return { view: 'routes' };
-  if (path === 'components') {
-    const component = params.get('component');
+  if (path === 'components' || path.startsWith('components/')) {
+    const sub = path.startsWith('components/') ? decodeURIComponent(path.slice('components/'.length)) : '';
+    // The query form is the pre-subpage deep-link format; keep it working.
+    const component = sub || params.get('component');
     return component ? { view: 'components', component } : { view: 'components' };
   }
   if (path === 'inspector') {
     const route = params.get('route');
     return route ? { view: 'inspector', route } : { view: 'inspector' };
   }
+  if (path === 'dictionary') return { view: 'dictionary' };
   return { view: 'overview' };
 }
 
 export function toHash(v: View): string {
   if (v.view === 'components' && v.component !== undefined) {
-    return `#/components?component=${encodeURIComponent(v.component)}`;
+    return `#/components/${encodeURIComponent(v.component)}`;
   }
   if (v.view === 'inspector' && v.route !== undefined) {
     return `#/inspector?route=${encodeURIComponent(v.route)}`;

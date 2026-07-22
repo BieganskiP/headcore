@@ -51,7 +51,7 @@ export function Overview({ state, navigate }: { state: GuiState; navigate: (v: V
           hint="headcore components used on this site"
           onClick={() => navigate({ view: 'components' })}
         />
-        <StatCard label="Dictionary entries" value={state.dictionaryCount} />
+        <StatCard label="Dictionary entries" value={state.dictionary.length} onClick={() => navigate({ view: 'dictionary' })} />
       </div>
 
       <section className="mb-8">

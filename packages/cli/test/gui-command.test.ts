@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+﻿import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createServer, type Server } from 'node:http';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -9,7 +9,7 @@ import type { GuiState } from 'headcore-core';
 function state(over: Partial<GuiState> = {}): GuiState {
   return {
     site: 's', language: 'en', fetchedAt: '2026-07-21T10:00:00.000Z',
-    routes: [], registry: [], dictionaryCount: 0, ...over,
+    routes: [], registry: [], dictionary: [], ...over,
   };
 }
 
@@ -48,24 +48,31 @@ function distDir(): string {
 
 describe('createGuiHandler /api', () => {
   it('serves the cached state', async () => {
-    const cache: GuiCache = { state: state({ dictionaryCount: 7 }), errors: [] };
+    const cache: GuiCache = { state: state({ dictionary: [{ key: 'k', value: 'v' }] }), errors: [], loading: false };
     const url = await serve(createGuiHandler(cache, vi.fn(), distDir()));
     const res = await fetch(`${url}/api/state`);
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true, state: state({ dictionaryCount: 7 }) });
+    expect(await res.json()).toEqual({ ok: true, state: state({ dictionary: [{ key: 'k', value: 'v' }] }) });
   });
 
   it('reports errors when no state has been fetched yet', async () => {
-    const cache: GuiCache = { state: null, errors: ['HTTP 401'] };
+    const cache: GuiCache = { state: null, errors: ['HTTP 401'], loading: false };
     const url = await serve(createGuiHandler(cache, vi.fn(), distDir()));
     const body = await (await fetch(`${url}/api/state`)).json();
-    expect(body).toEqual({ ok: false, errors: ['HTTP 401'] });
+    expect(body).toEqual({ ok: false, loading: false, errors: ['HTTP 401'] });
+  });
+
+  it('reports loading while the initial fetch is still in flight', async () => {
+    const cache: GuiCache = { state: null, errors: [], loading: true };
+    const url = await serve(createGuiHandler(cache, vi.fn(), distDir()));
+    const body = await (await fetch(`${url}/api/state`)).json();
+    expect(body).toEqual({ ok: false, loading: true, errors: [] });
   });
 
   it('refresh success swaps the cache and passes lang through', async () => {
     const next = state({ language: 'da' });
     const refresh = vi.fn().mockResolvedValue(next);
-    const cache: GuiCache = { state: state(), errors: [] };
+    const cache: GuiCache = { state: state(), errors: [], loading: false };
     const url = await serve(createGuiHandler(cache, refresh, distDir()));
 
     const res = await fetch(`${url}/api/refresh`, {
@@ -83,16 +90,16 @@ describe('createGuiHandler /api', () => {
 
   it('refresh without a body refreshes the current language', async () => {
     const refresh = vi.fn().mockResolvedValue(state());
-    const url = await serve(createGuiHandler({ state: null, errors: [] }, refresh, distDir()));
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, refresh, distDir()));
     const res = await fetch(`${url}/api/refresh`, { method: 'POST' });
     expect(res.status).toBe(200);
     expect(refresh).toHaveBeenCalledWith(undefined);
   });
 
   it('refresh failure keeps the previous state', async () => {
-    const previous = state({ dictionaryCount: 7 });
+    const previous = state({ dictionary: [{ key: 'k', value: 'v' }] });
     const refresh = vi.fn().mockRejectedValue(new Error('edge down'));
-    const cache: GuiCache = { state: previous, errors: [] };
+    const cache: GuiCache = { state: previous, errors: [], loading: false };
     const url = await serve(createGuiHandler(cache, refresh, distDir()));
 
     const body = await (await fetch(`${url}/api/refresh`, { method: 'POST' })).json();
@@ -103,26 +110,26 @@ describe('createGuiHandler /api', () => {
   });
 
   it('rejects an invalid JSON body with 400', async () => {
-    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), distDir()));
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir()));
     const res = await fetch(`${url}/api/refresh`, { method: 'POST', body: '{nope' });
     expect(res.status).toBe(400);
   });
 
   it('returns JSON 404 for unknown api endpoints', async () => {
-    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), distDir()));
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir()));
     const res = await fetch(`${url}/api/nope`);
     expect(res.status).toBe(404);
     expect((await res.json()).ok).toBe(false);
   });
 
   it('rejects a malformed percent-encoded path with 400', async () => {
-    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), distDir()));
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir()));
     const res = await fetch(`${url}/%`);
     expect(res.status).toBe(400);
   });
 
   it('rejects an oversized refresh body with 400', async () => {
-    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), distDir()));
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir()));
     const res = await fetch(`${url}/api/refresh`, { method: 'POST', body: 'x'.repeat(1_100_000) });
     expect(res.status).toBe(400);
   });
@@ -130,7 +137,7 @@ describe('createGuiHandler /api', () => {
 
 describe('createGuiHandler static serving', () => {
   it('serves index.html at /', async () => {
-    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), distDir()));
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir()));
     const res = await fetch(`${url}/`);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8');
@@ -138,14 +145,14 @@ describe('createGuiHandler static serving', () => {
   });
 
   it('serves assets with their mime type', async () => {
-    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), distDir()));
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir()));
     const res = await fetch(`${url}/assets/app.js`);
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('text/javascript; charset=utf-8');
   });
 
   it('falls back to index.html for unknown non-api paths (SPA)', async () => {
-    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), distDir()));
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), distDir()));
     const res = await fetch(`${url}/routes`);
     expect(res.status).toBe(200);
     expect(await res.text()).toContain('headcore');
@@ -154,14 +161,14 @@ describe('createGuiHandler static serving', () => {
   it('blocks path traversal outside the dist dir', async () => {
     const dir = distDir();
     writeFileSync(join(dir, '..', 'secret.txt'), 'top secret', 'utf8');
-    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), dir));
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), dir));
     const res = await fetch(`${url}/..%2Fsecret.txt`);
     expect(res.status).toBe(403);
     rmSync(join(dir, '..', 'secret.txt'), { force: true });
   });
 
   it('returns JSON 404 when the dist dir is missing entirely', async () => {
-    const url = await serve(createGuiHandler({ state: null, errors: [] }, vi.fn(), join(tmpdir(), 'does-not-exist-headcore')));
+    const url = await serve(createGuiHandler({ state: null, errors: [], loading: false }, vi.fn(), join(tmpdir(), 'does-not-exist-headcore')));
     const res = await fetch(`${url}/`);
     expect(res.status).toBe(404);
     expect((await res.json()).errors[0]).toMatch(/assets missing/);
@@ -200,9 +207,28 @@ describe('runGui', () => {
     servers.push(result.server);
 
     expect(deps.fetchState).toHaveBeenCalledWith(config, 'en');
-    expect(result.initialErrors).toEqual([]);
+    const ready = await result.ready;
+    expect(ready.errors).toEqual([]);
+    expect(ready.state).toEqual(state());
     const body = await (await fetch(`${result.url}/api/state`)).json();
     expect(body.ok).toBe(true);
+  });
+
+  it('serves a loading state while the initial fetch is still pending', async () => {
+    let resolveFetch: (s: GuiState) => void = () => {};
+    const deps = guiDeps({
+      fetchState: vi.fn().mockReturnValue(new Promise<GuiState>((res) => { resolveFetch = res; })),
+    });
+    const result = await runGui({ lang: undefined, port: undefined, noOpen: true }, { ...deps, basePort: 0 });
+    servers.push(result.server);
+
+    const pending = await (await fetch(`${result.url}/api/state`)).json();
+    expect(pending).toEqual({ ok: false, loading: true, errors: [] });
+
+    resolveFetch(state());
+    await result.ready;
+    const loaded = await (await fetch(`${result.url}/api/state`)).json();
+    expect(loaded.ok).toBe(true);
   });
 
   it('opens the browser unless --no-open', async () => {
@@ -226,7 +252,9 @@ describe('runGui', () => {
     const result = await runGui({ lang: undefined, port: undefined, noOpen: true }, { ...deps, basePort: 0 });
     servers.push(result.server);
 
-    expect(result.initialErrors).toEqual(['HTTP 401']);
+    const ready = await result.ready;
+    expect(ready.errors).toEqual(['HTTP 401']);
+    expect(ready.state).toBeNull();
     expect((await (await fetch(`${result.url}/api/state`)).json()).ok).toBe(false);
 
     const retried = await (await fetch(`${result.url}/api/refresh`, { method: 'POST' })).json();

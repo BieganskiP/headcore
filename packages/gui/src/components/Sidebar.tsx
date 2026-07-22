@@ -5,6 +5,7 @@ const ITEMS: Array<{ view: View['view']; label: string }> = [
   { view: 'routes', label: 'Routes' },
   { view: 'components', label: 'Components' },
   { view: 'inspector', label: 'Inspector' },
+  { view: 'dictionary', label: 'Dictionary' },
 ];
 
 export function Sidebar({ view, onNavigate }: { view: View; onNavigate: (v: View) => void }) {

@@ -18,6 +18,8 @@ export interface GuiCache {
   state: GuiState | null;
   /** Errors from the last failed fetch while no state exists yet. */
   errors: string[];
+  /** True while the initial background fetch is still in flight. */
+  loading: boolean;
 }
 
 export type GuiRefresh = (lang?: string) => Promise<GuiState>;
@@ -88,7 +90,7 @@ export function createGuiHandler(cache: GuiCache, refresh: GuiRefresh, distDir: 
 
     if (pathname === '/api/state' && req.method === 'GET') {
       if (cache.state) sendJson(res, 200, { ok: true, state: cache.state });
-      else sendJson(res, 200, { ok: false, errors: cache.errors });
+      else sendJson(res, 200, { ok: false, loading: cache.loading, errors: cache.errors });
       return;
     }
 
@@ -176,7 +178,7 @@ export function defaultFetchState(config: HeadcoreConfig, lang: string): Promise
     site: config.edge.site,
     language: lang,
     routes: () => client.getRoutesDetailed(lang),
-    dictionaryCount: () => client.getDictionary(lang).then((entries) => entries.length),
+    dictionary: () => client.getDictionary(lang),
     registry: listComponents().map(manifestToRegistryEntry),
   });
 }
@@ -196,11 +198,17 @@ export interface GuiInput {
   noOpen: boolean;
 }
 
+export interface GuiReady {
+  state: GuiState | null;
+  errors: string[];
+}
+
 export interface GuiResult {
   server: Server;
   url: string;
   port: number;
-  initialErrors: string[];
+  /** Settles when the initial background fetch finishes (never rejects). */
+  ready: Promise<GuiReady>;
 }
 
 export async function runGui(input: GuiInput, deps?: Partial<GuiDeps>): Promise<GuiResult> {
@@ -216,19 +224,29 @@ export async function runGui(input: GuiInput, deps?: Partial<GuiDeps>): Promise<
     return state;
   };
 
-  const cache: GuiCache = { state: null, errors: [] };
-  const initialErrors: string[] = [];
-  try {
-    cache.state = await refresh();
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    cache.errors = [message];
-    initialErrors.push(message);
-  }
+  const cache: GuiCache = { state: null, errors: [], loading: true };
+
+  // The Edge fetch can take several seconds; serve the app (with a loading
+  // state) and open the browser right away instead of blocking on it.
+  const ready: Promise<GuiReady> = refresh()
+    .then((state) => {
+      // A user-triggered refresh may have landed first; the newer result wins.
+      if (cache.state === null) cache.state = state;
+      cache.errors = [];
+      return { state: cache.state, errors: [] };
+    })
+    .catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      if (cache.state === null) cache.errors = [message];
+      return { state: cache.state, errors: [message] };
+    })
+    .finally(() => {
+      cache.loading = false;
+    });
 
   const server = createServer(createGuiHandler(cache, refresh, deps?.distDir ?? defaultGuiDistDir()));
   const port = await listenWithRetry(server, input.port ?? deps?.basePort ?? DEFAULT_PORT);
   const url = `http://127.0.0.1:${port}`;
   if (!input.noOpen) (deps?.openBrowser ?? defaultOpenBrowser)(url);
-  return { server, url, port, initialErrors };
+  return { server, url, port, ready };
 }

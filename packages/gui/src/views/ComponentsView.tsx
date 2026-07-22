@@ -1,58 +1,39 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { GuiState } from '../lib/types';
 import type { View } from '../lib/router';
 import { usageCounts, registryCoverage } from '../lib/analytics';
 import { Badge } from '../components/Badge';
+import { ComponentDetailView } from './ComponentDetailView';
 
 export function ComponentsView({ state, selected, navigate }: { state: GuiState; selected?: string; navigate: (v: View) => void }) {
+  const [filter, setFilter] = useState('');
   const usage = useMemo(() => usageCounts(state.routes, state.registry), [state.routes, state.registry]);
   const coverage = useMemo(() => registryCoverage(state.routes, state.registry), [state.routes, state.registry]);
   const usedNames = useMemo(() => new Set(coverage.used.map((e) => e.name)), [coverage]);
+
+  const filtered = useMemo(() => {
+    const needle = filter.trim().toLowerCase();
+    return needle ? usage.filter((u) => u.name.toLowerCase().includes(needle)) : usage;
+  }, [usage, filter]);
   const max = usage[0]?.count ?? 1;
-  const detail = selected !== undefined ? usage.find((u) => u.name === selected) : undefined;
+
+  if (selected !== undefined) {
+    return <ComponentDetailView state={state} component={selected} navigate={navigate} />;
+  }
 
   return (
     <div className="max-w-4xl">
-      <h1 className="mb-4 text-xl font-semibold">Components</h1>
-
-      {selected !== undefined && detail === undefined && (
-        <p className="mb-4 text-sm text-amber-700 dark:text-amber-400">
-          No component named <code>{selected}</code> in the current data.
-        </p>
-      )}
-
-      {detail && (
-        <section className="mb-6 rounded-lg border border-sky-200 bg-sky-50 p-4 dark:border-sky-900 dark:bg-sky-950/40">
-          <div className="mb-2 flex items-center gap-2">
-            <h2 className="font-semibold">{detail.name}</h2>
-            {detail.inRegistry && <Badge tone="green">registry</Badge>}
-            <button
-              type="button"
-              aria-label={`Clear selection: ${detail.name}`}
-              className="ml-auto text-sm text-slate-500 hover:underline focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-slate-400"
-              onClick={() => navigate({ view: 'components' })}
-            >
-              clear
-            </button>
-          </div>
-          <p className="mb-2 text-sm text-slate-600 dark:text-slate-400">
-            Used on {detail.count} route{detail.count === 1 ? '' : 's'}:
-          </p>
-          <ul className="text-sm">
-            {detail.routes.map((r) => (
-              <li key={r}>
-                <button
-                  type="button"
-                  className="text-sky-600 hover:underline focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-sky-400"
-                  onClick={() => navigate({ view: 'inspector', route: r })}
-                >
-                  <code>{r}</code>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <div className="mb-4 flex items-center gap-3">
+        <h1 className="text-xl font-semibold">Components</h1>
+        <span className="text-sm text-slate-500 dark:text-slate-400">{filtered.length} of {usage.length}</span>
+        <input
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="Filter by name…"
+          aria-label="Filter components"
+          className="ml-auto w-64 rounded border border-slate-300 bg-transparent px-2 py-1 text-sm dark:border-slate-700"
+        />
+      </div>
 
       <table className="mb-8 w-full text-left text-sm">
         <thead>
@@ -63,8 +44,8 @@ export function ComponentsView({ state, selected, navigate }: { state: GuiState;
           </tr>
         </thead>
         <tbody>
-          {usage.map((u) => (
-            <tr key={u.name} className={`border-b border-slate-100 dark:border-slate-900 ${u.name === selected ? 'bg-sky-50 dark:bg-sky-950/40' : ''}`}>
+          {filtered.map((u) => (
+            <tr key={u.name} className="border-b border-slate-100 dark:border-slate-900">
               <td className="py-1.5 pr-4">
                 <button
                   type="button"
@@ -94,11 +75,22 @@ export function ComponentsView({ state, selected, navigate }: { state: GuiState;
             return (
               <li key={entry.name} className="rounded border border-slate-200 p-3 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{entry.name}</span>
+                  <button
+                    type="button"
+                    className="font-medium text-sky-600 hover:underline focus-visible:ring-2 focus-visible:ring-sky-400 dark:text-sky-400"
+                    onClick={() => navigate({ view: 'components', component: entry.componentName })}
+                  >
+                    {entry.name}
+                  </button>
                   <Badge tone={used ? 'green' : 'amber'}>{used ? 'used' : 'unused'}</Badge>
                 </div>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{entry.description}</p>
                 {entry.placement && <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">Placement: {entry.placement}</p>}
+                {entry.placeholders.length > 0 && (
+                  <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                    Placeholders: {entry.placeholders.map((p) => p.key).join(', ')}
+                  </p>
+                )}
               </li>
             );
           })}

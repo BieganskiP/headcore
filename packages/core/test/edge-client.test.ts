@@ -386,8 +386,8 @@ describe('EdgeClient.getRoutesDetailed', () => {
             {
               componentName: 'Hero',
               dataSource: '{GUID-1}',
-              fieldNames: ['Title'],
-              placeholders: { inner: [{ componentName: 'Card', fieldNames: [], placeholders: {} }] },
+              fields: { Title: { value: 'Big' } },
+              placeholders: { inner: [{ componentName: 'Card', fields: {}, placeholders: {} }] },
             },
           ],
         },

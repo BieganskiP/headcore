@@ -85,10 +85,13 @@ headcore gui [--lang <lang>] [--port <n>] [--no-open]
 
 Starts a local, read-only analytical dashboard for the configured site:
 routes (tree + table), components with usage counts and registry coverage,
-a per-route layout inspector, and site health (freshness, dictionary size).
-Data is fetched from Experience Edge once at startup; use the Refresh button
-(or the language box) to refetch. Default port 4646 (auto-increments if
-busy), bound to 127.0.0.1 only.
+per-component detail pages (every route and rendering the component appears
+on, with datasource, field values, and placeholder contents), a per-route
+layout inspector, a dictionary browser (all keys and phrases, filterable),
+and site health (freshness, dictionary size). The browser opens immediately and
+shows a loading indicator while the initial Experience Edge fetch runs in
+the background; use the Refresh button (or the language box) to refetch.
+Default port 4646 (auto-increments if busy), bound to 127.0.0.1 only.
 
 Tip: add a script to your project for quick access:
 

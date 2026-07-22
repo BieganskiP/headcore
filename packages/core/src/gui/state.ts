@@ -1,11 +1,12 @@
-import type { RenderingNode } from '../types.js';
-import type { ComponentManifest } from '../registry/manifest.js';
+import type { RawFieldValue, RenderingNode } from '../types.js';
+import type { ComponentManifest, SitecorePlaceholder } from '../registry/manifest.js';
+import type { DictionaryEntry } from '../edge/client.js';
 
 export interface GuiLayoutNode {
   componentName: string;
   dataSource?: string;
-  /** Field names only — values are dropped to keep the payload lean. */
-  fieldNames: string[];
+  /** Raw field values as returned in layout JSON — the GUI renders them on demand. */
+  fields: Record<string, RawFieldValue>;
   placeholders: Record<string, GuiLayoutNode[]>;
 }
 
@@ -26,6 +27,8 @@ export interface GuiRegistryEntry {
   componentName: string;
   description: string;
   placement?: string;
+  /** Placeholders the component exposes, from the manifest. */
+  placeholders: SitecorePlaceholder[];
 }
 
 export interface GuiState {
@@ -35,12 +38,12 @@ export interface GuiState {
   fetchedAt: string;
   routes: GuiRouteDetail[];
   registry: GuiRegistryEntry[];
-  dictionaryCount: number;
+  dictionary: DictionaryEntry[];
   /** Partial-failure notes (e.g. dictionary query failed). */
   errors?: string[];
 }
 
-/** Trim a parsed layout to structure only: names, dataSource, field names. */
+/** Trim a parsed layout to what the GUI needs: names, dataSource, fields (params are dropped). */
 export function trimPlaceholders(
   placeholders: Record<string, RenderingNode[]>,
 ): Record<string, GuiLayoutNode[]> {
@@ -49,7 +52,7 @@ export function trimPlaceholders(
     out[key] = nodes.map((n) => ({
       componentName: n.componentName,
       ...(n.dataSource !== undefined ? { dataSource: n.dataSource } : {}),
-      fieldNames: Object.keys(n.fields),
+      fields: n.fields,
       placeholders: trimPlaceholders(n.placeholders),
     }));
   }
@@ -62,6 +65,7 @@ export function manifestToRegistryEntry(m: ComponentManifest): GuiRegistryEntry 
     componentName: m.sitecore.rendering.componentName,
     description: m.description,
     ...(m.sitecore.placement !== undefined ? { placement: m.sitecore.placement } : {}),
+    placeholders: m.sitecore.placeholders,
   };
 }
 
@@ -69,7 +73,7 @@ export interface GuiStateSources {
   site: string;
   language: string;
   routes: () => Promise<GuiRouteDetail[]>;
-  dictionaryCount: () => Promise<number>;
+  dictionary: () => Promise<DictionaryEntry[]>;
   registry: GuiRegistryEntry[];
   /** Injectable clock for tests. */
   now?: () => Date;
@@ -77,15 +81,15 @@ export interface GuiStateSources {
 
 /**
  * Assemble the dashboard state. A routes failure propagates (there is no
- * useful state without routes); a dictionary failure degrades to count 0
+ * useful state without routes); a dictionary failure degrades to no entries
  * plus an errors entry.
  */
 export async function assembleGuiState(src: GuiStateSources): Promise<GuiState> {
   const routes = await src.routes();
   const errors: string[] = [];
-  let dictionaryCount = 0;
+  let dictionary: DictionaryEntry[] = [];
   try {
-    dictionaryCount = await src.dictionaryCount();
+    dictionary = await src.dictionary();
   } catch (err) {
     errors.push(`dictionary: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -95,7 +99,7 @@ export async function assembleGuiState(src: GuiStateSources): Promise<GuiState> 
     fetchedAt: (src.now?.() ?? new Date()).toISOString(),
     routes,
     registry: src.registry,
-    dictionaryCount,
+    dictionary,
     ...(errors.length > 0 ? { errors } : {}),
   };
 }

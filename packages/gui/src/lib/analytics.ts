@@ -1,4 +1,4 @@
-import type { GuiRouteDetail, GuiRegistryEntry } from './types';
+import type { GuiRouteDetail, GuiRegistryEntry, GuiLayoutNode } from './types';
 
 export interface ComponentUsage {
   name: string;
@@ -26,6 +26,37 @@ export function usageCounts(routes: GuiRouteDetail[], registry: GuiRegistryEntry
       inRegistry: registryNames.has(name),
     }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+}
+
+export interface RenderingInstance {
+  /** Placeholder path down to the rendering, e.g. "headless-main[0] › tabs[2]". */
+  path: string;
+  node: GuiLayoutNode;
+}
+
+export interface RouteInstances {
+  route: GuiRouteDetail;
+  instances: RenderingInstance[];
+}
+
+/** Every rendering of a component per route, with its placeholder path — sorted by route path. */
+export function componentInstances(routes: GuiRouteDetail[], componentName: string): RouteInstances[] {
+  const out: RouteInstances[] = [];
+  for (const route of routes) {
+    const instances: RenderingInstance[] = [];
+    const walk = (placeholders: Record<string, GuiLayoutNode[]>, prefix: string): void => {
+      for (const [key, nodes] of Object.entries(placeholders)) {
+        nodes.forEach((n, i) => {
+          const path = `${prefix}${key}[${i}]`;
+          if (n.componentName === componentName) instances.push({ path, node: n });
+          walk(n.placeholders, `${path} › `);
+        });
+      }
+    };
+    walk(route.layout, '');
+    if (instances.length > 0) out.push({ route, instances });
+  }
+  return out.sort((a, b) => a.route.routePath.localeCompare(b.route.routePath));
 }
 
 export interface RegistryCoverage {

@@ -14,7 +14,7 @@ function node(over: Partial<RenderingNode> = {}): RenderingNode {
 }
 
 describe('trimPlaceholders', () => {
-  it('keeps component name, dataSource, field names and nested placeholders; drops values and params', () => {
+  it('keeps component name, dataSource, field values and nested placeholders; drops params', () => {
     const input: Record<string, RenderingNode[]> = {
       'headless-main': [
         node({
@@ -34,9 +34,9 @@ describe('trimPlaceholders', () => {
         {
           componentName: 'Hero',
           dataSource: '{GUID-1}',
-          fieldNames: ['Title', 'Image'],
+          fields: { Title: { value: 'Big' }, Image: { value: { src: 'x.jpg' } } },
           placeholders: {
-            'hero-inner': [{ componentName: 'Card', fieldNames: ['Text'], placeholders: {} }],
+            'hero-inner': [{ componentName: 'Card', fields: { Text: { value: 'hi' } }, placeholders: {} }],
           },
         },
       ],
@@ -46,7 +46,7 @@ describe('trimPlaceholders', () => {
   it('omits dataSource when the rendering has none', () => {
     const out = trimPlaceholders({ main: [node()] });
     expect(out.main[0]).not.toHaveProperty('dataSource');
-    expect(out.main[0]).toEqual({ componentName: 'Hero', fieldNames: [], placeholders: {} });
+    expect(out.main[0]).toEqual({ componentName: 'Hero', fields: {}, placeholders: {} });
   });
 
   it('returns an empty object for empty placeholders', () => {
@@ -70,12 +70,13 @@ describe('manifestToRegistryEntry', () => {
     },
   };
 
-  it('maps name, componentName, description and placement', () => {
+  it('maps name, componentName, description, placement and placeholders', () => {
     expect(manifestToRegistryEntry(manifest)).toEqual({
       name: 'Tabs',
       componentName: 'Tabs',
       description: 'Editable tabs',
       placement: 'partial design',
+      placeholders: [{ key: 'tabs-{*}', dynamic: true, allowedRenderings: ['Tab'] }],
     });
   });
 
@@ -88,6 +89,7 @@ describe('manifestToRegistryEntry', () => {
       name: 'Tabs',
       componentName: 'Tabs',
       description: 'Editable tabs',
+      placeholders: [{ key: 'tabs-{*}', dynamic: true, allowedRenderings: ['Tab'] }],
     });
   });
 });
@@ -97,16 +99,17 @@ describe('assembleGuiState', () => {
     routePath: '/', name: 'Home', updatedAt: '2026-07-01', components: ['Hero'], layout: {},
   };
   const registry: GuiRegistryEntry[] = [
-    { name: 'Tabs', componentName: 'Tabs', description: 'Editable tabs' },
+    { name: 'Tabs', componentName: 'Tabs', description: 'Editable tabs', placeholders: [] },
   ];
   const now = () => new Date('2026-07-21T10:00:00.000Z');
 
-  it('combines routes, registry and dictionary count with a timestamp', async () => {
+  it('combines routes, registry and dictionary entries with a timestamp', async () => {
+    const entries = [{ key: 'nav.home', value: 'Home' }];
     const state = await assembleGuiState({
       site: 'my-site',
       language: 'en',
       routes: async () => [route],
-      dictionaryCount: async () => 42,
+      dictionary: async () => entries,
       registry,
       now,
     });
@@ -116,21 +119,21 @@ describe('assembleGuiState', () => {
       fetchedAt: '2026-07-21T10:00:00.000Z',
       routes: [route],
       registry,
-      dictionaryCount: 42,
+      dictionary: entries,
     });
     expect(state.errors).toBeUndefined();
   });
 
-  it('degrades a dictionary failure to count 0 plus an errors entry', async () => {
+  it('degrades a dictionary failure to no entries plus an errors entry', async () => {
     const state = await assembleGuiState({
       site: 'my-site',
       language: 'en',
       routes: async () => [route],
-      dictionaryCount: async () => { throw new Error('edge down'); },
+      dictionary: async () => { throw new Error('edge down'); },
       registry,
       now,
     });
-    expect(state.dictionaryCount).toBe(0);
+    expect(state.dictionary).toEqual([]);
     expect(state.errors).toEqual(['dictionary: edge down']);
     expect(state.routes).toEqual([route]);
   });
@@ -140,7 +143,7 @@ describe('assembleGuiState', () => {
       site: 'my-site',
       language: 'en',
       routes: async () => { throw new Error('HTTP 401'); },
-      dictionaryCount: async () => 0,
+      dictionary: async () => [],
       registry: [],
       now,
     })).rejects.toThrow(/401/);

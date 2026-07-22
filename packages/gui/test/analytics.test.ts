@@ -1,14 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { usageCounts, registryCoverage, buildRouteTree, routeCount, freshness } from '../src/lib/analytics';
-import type { GuiRouteDetail, GuiRegistryEntry } from '../src/lib/types';
+import { usageCounts, registryCoverage, buildRouteTree, routeCount, freshness, componentInstances } from '../src/lib/analytics';
+import type { GuiRouteDetail, GuiRegistryEntry, GuiLayoutNode } from '../src/lib/types';
 
 function route(routePath: string, components: string[], updatedAt: string | null = null): GuiRouteDetail {
   return { routePath, name: routePath, updatedAt, components, layout: {} };
 }
 
+function layoutNode(componentName: string, over: Partial<GuiLayoutNode> = {}): GuiLayoutNode {
+  return { componentName, fields: {}, placeholders: {}, ...over };
+}
+
 const registry: GuiRegistryEntry[] = [
-  { name: 'Tabs', componentName: 'Tabs', description: 'tabs' },
-  { name: 'Breadcrumbs', componentName: 'Breadcrumbs', description: 'crumbs' },
+  { name: 'Tabs', componentName: 'Tabs', description: 'tabs', placeholders: [{ key: 'headcore-tabs', dynamic: false, allowedRenderings: ['Tab'] }] },
+  { name: 'Breadcrumbs', componentName: 'Breadcrumbs', description: 'crumbs', placeholders: [] },
 ];
 
 describe('usageCounts', () => {
@@ -26,6 +30,30 @@ describe('usageCounts', () => {
 
   it('returns an empty list for no routes', () => {
     expect(usageCounts([], registry)).toEqual([]);
+  });
+});
+
+describe('componentInstances', () => {
+  it('finds every rendering per route with its placeholder path, sorted by route', () => {
+    const hero = layoutNode('Hero', { dataSource: '{GUID-1}', fields: { Title: { value: 'Big' } } });
+    const nestedHero = layoutNode('Hero', { fields: { Title: { value: 'Inner' } } });
+    const routes: GuiRouteDetail[] = [
+      {
+        ...route('/b', ['Card', 'Hero']),
+        layout: { main: [layoutNode('Card', { placeholders: { inner: [nestedHero] } })] },
+      },
+      { ...route('/a', ['Hero']), layout: { main: [hero, layoutNode('Aside')] } },
+      { ...route('/c', ['Aside']), layout: { main: [layoutNode('Aside')] } },
+    ];
+
+    expect(componentInstances(routes, 'Hero')).toEqual([
+      { route: routes[1], instances: [{ path: 'main[0]', node: hero }] },
+      { route: routes[0], instances: [{ path: 'main[0] › inner[0]', node: nestedHero }] },
+    ]);
+  });
+
+  it('returns an empty list when the component is nowhere in the layouts', () => {
+    expect(componentInstances([route('/', ['Hero'])], 'Hero')).toEqual([]);
   });
 });
 

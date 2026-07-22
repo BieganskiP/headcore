@@ -1,6 +1,8 @@
 import type { GuiState } from './types';
 
-export type ApiResult = { ok: true; state: GuiState } | { ok: false; errors: string[] };
+export type ApiResult =
+  | { ok: true; state: GuiState }
+  | { ok: false; loading?: boolean; errors: string[] };
 
 async function parseApiResponse(res: Response): Promise<ApiResult> {
   if (!(res.headers.get('content-type') ?? '').includes('application/json')) {

@@ -122,7 +122,12 @@ async function main(): Promise<void> {
   if (args.command === 'gui') {
     const result = await runGui({ lang: args.lang, port: args.port, noOpen: args.noOpen });
     process.stdout.write(`headcore gui running at ${result.url}\n`);
-    for (const e of result.initialErrors) {
+    process.stdout.write('Fetching site data from Edge in the background…\n');
+    const ready = await result.ready;
+    if (ready.errors.length === 0 && ready.state) {
+      process.stdout.write(`Site data loaded: ${ready.state.routes.length} routes.\n`);
+    }
+    for (const e of ready.errors) {
       process.stdout.write(`warning: initial fetch failed: ${e}\n`);
       process.stdout.write('  The dashboard shows an error panel with a Retry button.\n');
     }
