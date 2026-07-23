@@ -14,6 +14,7 @@ const ITEMS: Array<{ view: View['view']; label: string }> = [
   { view: 'dictionary', label: 'Dictionary' },
   { view: 'audit', label: 'Audit' },
   { view: 'history', label: 'History' },
+  { view: 'docs', label: 'Docs' },
 ];
 
 export function Sidebar({ view, onNavigate }: { view: View; onNavigate: (v: View) => void }) {

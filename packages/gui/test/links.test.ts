@@ -16,6 +16,52 @@ function page(routePath: string, ...hrefs: string[]): GuiRouteDetail {
   return route(routePath, { main: [node('Rich', { fields: { Body: { value: html } } })] });
 }
 
+describe('locale-prefixed link resolution', () => {
+  it('resolves language-root links (/en/, /ar-sa/) to the home route instead of flagging them broken', () => {
+    // A language switcher linking every site language — the reported false positive.
+    const routes = [
+      route('/'),
+      page('/parking-and-transport/park-long/new-content-item', '/ar-sa/', '/en/'),
+    ];
+    const analysis = analyzeLinks(routes);
+    expect(analysis.broken).toEqual([]);
+    expect(analysis.inbound.get('/')).toBe(2);
+    expect(analysis.outbound.get('/parking-and-transport/park-long/new-content-item')).toBe(2);
+  });
+
+  it('resolves locale-prefixed deep links against the language-neutral route path', () => {
+    const routes = [page('/', '/en/parking', '/ar-sa/parking'), route('/parking')];
+    const analysis = analyzeLinks(routes);
+    expect(analysis.broken).toEqual([]);
+    expect(analysis.inbound.get('/parking')).toBe(2);
+    expect(analysis.depths.get('/parking')).toBe(1);
+  });
+
+  it('still flags a locale-prefixed link whose remainder is not a route', () => {
+    const routes = [page('/', '/de/nonexistent')];
+    expect(analyzeLinks(routes).broken.map((l) => l.href)).toEqual(['/de/nonexistent']);
+  });
+
+  it('prefers a direct route match over locale stripping (/it the IT page, not Italian)', () => {
+    const routes = [page('/', '/it/', '/it/support'), route('/it'), route('/it/support')];
+    const analysis = analyzeLinks(routes);
+    expect(analysis.broken).toEqual([]);
+    expect(analysis.inbound.get('/it')).toBe(1);
+    expect(analysis.inbound.get('/it/support')).toBe(1);
+    expect(analysis.inbound.get('/')).toBeUndefined();
+  });
+
+  it('does not strip a first segment that does not look like a locale', () => {
+    const routes = [page('/', '/careers/jobs')];
+    expect(analyzeLinks(routes).broken.map((l) => l.href)).toEqual(['/careers/jobs']);
+  });
+
+  it('linkEdges resolves locale-prefixed links the same way', () => {
+    const routes = [route('/'), page('/about', '/en/')];
+    expect(linkEdges(routes)).toEqual([{ from: '/about', to: '/', count: 1 }]);
+  });
+});
+
 describe('extractLinks', () => {
   it('regexes hrefs out of rich text — double quotes, single quotes, multiple per string', () => {
     const routes = [route('/', {

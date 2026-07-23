@@ -18,6 +18,7 @@ describe('parseHash', () => {
     expect(parseHash('#/localization')).toEqual({ view: 'localization' });
     expect(parseHash('#/content')).toEqual({ view: 'content' });
     expect(parseHash('#/history')).toEqual({ view: 'history' });
+    expect(parseHash('#/docs')).toEqual({ view: 'docs' });
     expect(parseHash('#/audit')).toEqual({ view: 'audit' });
     expect(parseHash('#/inspector')).toEqual({ view: 'inspector' });
     expect(parseHash('#/dictionary')).toEqual({ view: 'dictionary' });
@@ -85,6 +86,7 @@ describe('toHash', () => {
       { view: 'content' },
       { view: 'content', q: 'hello world' },
       { view: 'history' },
+      { view: 'docs' },
       { view: 'audit' },
       { view: 'inspector' },
       { view: 'inspector', route: '/about/team' },

@@ -166,6 +166,24 @@ Pass `--out <file>` to save the JSON export to a file instead of printing it
 (`--json` is implied); the file is written UTF-8 without a BOM, parent
 directories are created, and an existing file is overwritten.
 
+## GUI dashboard
+
+```sh
+headcore gui
+```
+
+Opens a local, read-only analytical dashboard for the configured site in your
+browser: what pages exist and how fresh they are, which components are used
+where (and which registry components are not), how components nest, which
+datasources are shared across pages, broken internal links and orphan pages,
+localization coverage per language, full-text search across all field values,
+a per-route layout inspector, a dictionary browser, a content/SEO audit, and
+snapshot history with trends over time.
+
+Everything is fetched from Experience Edge and stays on your machine — nothing
+is written to Sitecore. Full documentation is built into the dashboard (Docs
+in the sidebar).
+
 ## Output location
 
 - `componentPath` — base directory for generated and copied-in components

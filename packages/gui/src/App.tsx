@@ -20,6 +20,7 @@ import { AuditView } from './views/AuditView';
 import { InspectorView } from './views/InspectorView';
 import { DictionaryView } from './views/DictionaryView';
 import { HistoryView } from './views/HistoryView';
+import { DocsView } from './views/DocsView';
 
 interface Snapshot {
   state: GuiState | null;
@@ -127,6 +128,7 @@ function renderView(view: View, state: GuiState, prev: GuiState | null, navigate
     // Key remounts the view when a palette pick changes the deep-linked query.
     case 'content': return <ContentSearchView key={view.q ?? ''} state={state} q={view.q} navigate={navigate} />;
     case 'history': return <HistoryView state={state} navigate={navigate} />;
+    case 'docs': return <DocsView state={state} navigate={navigate} />;
     case 'audit': return <AuditView state={state} navigate={navigate} />;
     case 'inspector': return <InspectorView state={state} route={view.route} navigate={navigate} />;
     // Key remounts the view when a palette pick changes the deep-linked filter.

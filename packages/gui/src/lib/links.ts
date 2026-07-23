@@ -103,7 +103,7 @@ export function linkEdges(routes: GuiRouteDetail[]): RouteEdge[] {
   const counts = new Map<string, RouteEdge>();
   for (const l of extractLinks(routes)) {
     if (l.kind !== 'internal' || l.target === null) continue;
-    const to = known.get(l.target);
+    const to = resolveTarget(known, l.target);
     if (to === undefined || to === l.from) continue;
     // Newline separator: it cannot appear in a route path.
     const key = `${l.from}\n${to}`;
@@ -120,6 +120,23 @@ function knownRoutes(routes: GuiRouteDetail[]): Map<string, string> {
   return known;
 }
 
+const LOCALE_RE = /^[a-z]{2}(-[a-z0-9]{2,4})?$/i;
+
+/**
+ * Resolve a normalized internal target against the route set. Sitecore route
+ * paths are language-neutral, but authored hrefs may carry the head app's
+ * locale prefix (/en/…, /ar-sa/) — when the direct lookup misses and the first
+ * segment looks like a locale, retry without it. Direct match wins, so a real
+ * route like /it is never mistaken for an Italian prefix.
+ */
+function resolveTarget(known: Map<string, string>, target: string): string | undefined {
+  const direct = known.get(target);
+  if (direct !== undefined) return direct;
+  const segments = target.split('/').filter(Boolean);
+  if (segments.length === 0 || !LOCALE_RE.test(segments[0])) return undefined;
+  return known.get(segments.length === 1 ? '/' : '/' + segments.slice(1).join('/'));
+}
+
 export function analyzeLinks(routes: GuiRouteDetail[]): LinkAnalysis {
   const links = extractLinks(routes);
   const known = knownRoutes(routes);
@@ -132,7 +149,7 @@ export function analyzeLinks(routes: GuiRouteDetail[]): LinkAnalysis {
 
   for (const l of links) {
     if (l.kind !== 'internal' || l.target === null) continue;
-    const to = known.get(l.target);
+    const to = resolveTarget(known, l.target);
     if (to === undefined) {
       broken.push(l);
       continue;

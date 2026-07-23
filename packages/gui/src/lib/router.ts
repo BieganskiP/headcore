@@ -14,7 +14,8 @@ export type View =
   | { view: 'audit' }
   | { view: 'inspector'; route?: string }
   | { view: 'dictionary'; q?: string }
-  | { view: 'history' };
+  | { view: 'history' }
+  | { view: 'docs' };
 
 export function parseHash(hash: string): View {
   const stripped = hash.replace(/^#\/?/, '');
@@ -50,6 +51,7 @@ export function parseHash(hash: string): View {
     return q ? { view: 'content', q } : { view: 'content' };
   }
   if (path === 'history') return { view: 'history' };
+  if (path === 'docs') return { view: 'docs' };
   if (path === 'audit') return { view: 'audit' };
   if (path === 'inspector') {
     const route = params.get('route');

@@ -83,37 +83,18 @@ headcore component <Name> --route <route> [--lang <lang>] [--variants <A,B,C>] [
 headcore gui [--lang <lang>] [--port <n>] [--no-open]
 ```
 
-Starts a local, read-only analytical dashboard for the configured site:
-routes (tree + table), components with usage counts, registry coverage, and
-per-field fill rates, per-component detail pages (every route and rendering
-the component appears on, with datasource, field values, and placeholder
-contents), a datasource explorer (which content items are shared across
-pages), internal link analysis (broken links, orphan pages, click-depth
-graph), a localization coverage matrix (route × language: translated /
-missing / stale), full-text content search across all field values, a
-per-route layout inspector, a dictionary browser with cross-language
-comparison, a content audit (empty fields, images without alt, missing page
-titles / meta descriptions, duplicate titles), and snapshot history with
-trend sparklines and two-snapshot diffs. The browser opens immediately and
-shows a loading indicator while the initial Experience Edge fetch runs in
-the background; use the Refresh button (or the language box) to refetch.
-Default port 4646 (auto-increments if busy), bound to 127.0.0.1 only.
+Starts a local, read-only analytical dashboard for the configured site — the
+site's published content, visualized: routes, component usage, composition
+graph, shared datasources, internal link analysis, localization coverage,
+full-text content search, a per-route layout inspector, dictionary browser,
+content/SEO audit, and snapshot history with trends. Data comes straight from
+Experience Edge; nothing is ever written to Sitecore, and the server binds to
+127.0.0.1 only (default port 4646, auto-increments if busy).
 
-Every distinct fetch is saved to `.headcore/history/` next to your config
-(identical fetches are recorded once; the newest 100 snapshots are kept) and
-powers the History view. Add `.headcore/` to your `.gitignore` if you do not
-want snapshots committed.
-
-Optional `gui` config section for deep links from the dashboard into editing:
-
-```ts
-// headcore.config.ts
-gui: {
-  // {itemId}, {lang}, {site}, {routePath} placeholders are substituted.
-  editUrlTemplate: 'https://pages.sitecorecloud.io/?sc_itemid={itemId}&sc_lang={lang}&sc_site={site}',
-  siteBaseUrl: 'https://www.example.com',
-},
-```
+Full documentation lives inside the dashboard — see **Docs** in the sidebar —
+including the optional `gui` config section for "open in editor" / "open live
+page" deep links, and the `.headcore/history/` snapshot store (add
+`.headcore/` to your `.gitignore` if you do not want snapshots committed).
 
 Tip: add a script to your project for quick access:
 
